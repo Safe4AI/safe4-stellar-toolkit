@@ -4,6 +4,8 @@ Safe4 Stellar Toolkit is a minimal, open-source hackathon extraction of Safe4:
 Stripe-like safety middleware for paid AI tools on Stellar. Every tool call is
 payment-aware, policy-aware, and receipt-backed.
 
+![Safe4 Stellar Toolkit demo home](docs/assets/demo-home.png)
+
 ## What It Does
 
 - protects paid AI tool endpoints with a `402` payment requirement
@@ -34,6 +36,14 @@ receipts.
   - simple rate limiting
 - receipt and audit output
 - a tiny browser demo at `GET /demo`
+
+## Verified Today
+
+- real Stellar testnet XLM payment flow exercised successfully
+- verified transaction hash:
+  - `ef0bcfd7c46f1f47d7c3769f60a0a9b12886bb96a67ef6b51f994acb4d2c3b83`
+- verification notes:
+  - [`docs/TESTNET_VERIFICATION.md`](docs/TESTNET_VERIFICATION.md)
 
 ## Quickstart
 
@@ -163,8 +173,9 @@ Safe4 verifies:
 
 1. `README.md`
 2. `HACKATHON_SUBMISSION.md`
-3. `STELLAR_ADAPTATION.md`
-4. `DEMO_SCRIPT.md`
-5. `apps/api/main.py`
-6. `packages/middleware/firewall.py`
-7. `packages/stellar/adapter.py`
+3. `docs/TESTNET_VERIFICATION.md`
+4. `STELLAR_ADAPTATION.md`
+5. `DEMO_SCRIPT.md`
+6. `apps/api/main.py`
+7. `packages/middleware/firewall.py`
+8. `packages/stellar/adapter.py`

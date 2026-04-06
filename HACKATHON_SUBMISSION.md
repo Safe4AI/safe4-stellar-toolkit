@@ -61,3 +61,12 @@ The repo supports two proof paths:
   - fastest and most reliable for a live hackathon demo
 - `transaction_hash`
   - stronger submission claim because Safe4 validates a real Stellar testnet transaction against the request requirements
+
+## Evidence
+
+- browser screenshots:
+  - `docs/assets/demo-home.png`
+  - `docs/assets/demo-payment-required.png`
+  - `docs/assets/demo-authorized.png`
+- verified testnet note:
+  - [`docs/TESTNET_VERIFICATION.md`](docs/TESTNET_VERIFICATION.md)

@@ -33,6 +33,11 @@ Click:
 2. Mock settle
 3. Retry paid call
 
+Reference screenshots:
+- `docs/assets/demo-home.png`
+- `docs/assets/demo-payment-required.png`
+- `docs/assets/demo-authorized.png`
+
 ## Option B: Curl Demo
 
 ### 1. Request a paid tool
