@@ -29,6 +29,10 @@
   - asset
   - amount
   - payer binding
+- the repo now includes client-side helper scripts for:
+  - testnet account funding
+  - real paid-tool demo execution
+- the real path has been exercised locally against a Stellar testnet XLM payment
 
 ### Mocked Fallback
 
@@ -43,6 +47,5 @@ payment alone does not unlock execution; verified payment plus policy does.
 
 ## Remaining Hardening
 
-- add a first-class client script that constructs and submits the Stellar testnet payment
 - support richer Stellar payment operation variants beyond the current payment-focused checks
 - capture a real testnet walkthrough artifact for the public submission

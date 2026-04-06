@@ -50,6 +50,15 @@ python -m pip install -r requirements.txt
 Copy-Item .env.example .env
 ```
 
+For the simplest real testnet demo, keep:
+
+```powershell
+SAFE4_STELLAR_ASSET_CODE=XLM
+SAFE4_STELLAR_ASSET_ISSUER=
+```
+
+and set `SAFE4_STELLAR_DESTINATION` to a funded Stellar testnet receiving account.
+
 Run:
 
 ```powershell
@@ -73,6 +82,20 @@ Optional screenshot capture for the submission:
 ```powershell
 npm install
 npm run capture:screenshots
+```
+
+## Real Testnet Helpers
+
+Create and fund a payer account:
+
+```powershell
+python scripts/create_testnet_account.py
+```
+
+Run the real end-to-end testnet demo:
+
+```powershell
+python scripts/run_testnet_payment_demo.py --source-secret <STELLAR_SECRET>
 ```
 
 ## Demo Flow
@@ -133,6 +156,8 @@ Safe4 verifies:
   - explicit policy engine and rate limiting
 - `docs/`
   - hackathon packaging docs
+- `scripts/`
+  - testnet account setup and real payment demo helpers
 
 ## Reading Order
 

@@ -102,12 +102,21 @@ class Safe4StellarToolkitTests(unittest.TestCase):
             "max_sentences": 1,
             "risk_flag": "low",
         }
-        with patch.dict(os.environ, {"SAFE4_STELLAR_VERIFICATION_MODE": "transaction_hash"}, clear=False):
+        with patch.dict(
+            os.environ,
+            {
+                "SAFE4_STELLAR_VERIFICATION_MODE": "transaction_hash",
+                "SAFE4_STELLAR_ASSET_CODE": "XLM",
+                "SAFE4_STELLAR_ASSET_ISSUER": "",
+            },
+            clear=False,
+        ):
             client = TestClient(build_app())
             first = client.post("/tools/summarise", json=payload)
             self.assertEqual(first.status_code, 402)
             challenge = first.json()
             self.assertEqual(challenge["payment_requirement"]["verification_mode"], "transaction_hash")
+            self.assertEqual(challenge["payment_requirement"]["asset_issuer"], "")
             self.assertTrue(challenge["payment_requirement"]["settle_endpoint"].endswith("/payments/transaction-hash-proof"))
 
             proof = client.post(
@@ -134,8 +143,7 @@ class Safe4StellarToolkitTests(unittest.TestCase):
                             "from": "GREALPAYERXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
                             "to": challenge["payment_requirement"]["destination"],
                             "amount": challenge["payment_requirement"]["amount"],
-                            "asset_code": challenge["payment_requirement"]["asset_code"],
-                            "asset_issuer": challenge["payment_requirement"]["asset_issuer"],
+                            "asset_type": "native",
                         }
                     ]
                 }
@@ -163,7 +171,15 @@ class Safe4StellarToolkitTests(unittest.TestCase):
             "max_sentences": 1,
             "risk_flag": "low",
         }
-        with patch.dict(os.environ, {"SAFE4_STELLAR_VERIFICATION_MODE": "transaction_hash"}, clear=False):
+        with patch.dict(
+            os.environ,
+            {
+                "SAFE4_STELLAR_VERIFICATION_MODE": "transaction_hash",
+                "SAFE4_STELLAR_ASSET_CODE": "XLM",
+                "SAFE4_STELLAR_ASSET_ISSUER": "",
+            },
+            clear=False,
+        ):
             client = TestClient(build_app())
             first = client.post("/tools/summarise", json=payload)
             challenge = first.json()
@@ -190,8 +206,7 @@ class Safe4StellarToolkitTests(unittest.TestCase):
                             "from": "GREALPAYERXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
                             "to": "GBADDESTINATIONXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
                             "amount": challenge["payment_requirement"]["amount"],
-                            "asset_code": challenge["payment_requirement"]["asset_code"],
-                            "asset_issuer": challenge["payment_requirement"]["asset_issuer"],
+                            "asset_type": "native",
                         }
                     ]
                 }

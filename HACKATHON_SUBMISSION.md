@@ -35,7 +35,9 @@ and returns a receipt-backed tool response.
 - receipt + audit output
 - mock settlement flow for fast demos
 - real transaction-hash verification against Stellar Horizon data
+- client-side testnet helper scripts to create/fund accounts and execute the real demo flow
 - thin Stellar adapter with request-bound payment requirements
+- validated locally against a real Stellar testnet XLM payment path
 
 ### Adapted from Safe4
 

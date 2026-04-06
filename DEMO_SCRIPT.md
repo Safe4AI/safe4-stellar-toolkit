@@ -11,6 +11,15 @@ required, policy is enforced, and receipts are returned.
 python -m uvicorn apps.api.main:app --host 0.0.0.0 --port 8080
 ```
 
+For the cleanest real testnet demo, configure:
+
+```powershell
+$env:SAFE4_STELLAR_VERIFICATION_MODE="transaction_hash"
+$env:SAFE4_STELLAR_ASSET_CODE="XLM"
+$env:SAFE4_STELLAR_ASSET_ISSUER=""
+$env:SAFE4_STELLAR_DESTINATION="<FUNDED_TESTNET_RECEIVER>"
+```
+
 ## Option A: Browser Demo
 
 Open:
@@ -48,31 +57,23 @@ Capture `payment_token`.
 
 ### 2B. Real Stellar testnet payment path
 
-Set:
+Create and fund a payer account if you do not already have one:
 
 ```powershell
-$env:SAFE4_STELLAR_VERIFICATION_MODE="transaction_hash"
+python scripts/create_testnet_account.py
 ```
 
-Restart the server, request a paid tool again, and capture:
-- `request_id`
-- `payment_requirement.destination`
-- `payment_requirement.amount`
-- `payment_requirement.asset_code`
-- `payment_requirement.asset_issuer`
-- `payment_requirement.memo`
-
-Then submit a matching Stellar testnet payment and capture its `tx_hash`.
-
-Create the Safe4 proof token:
+Then run the end-to-end testnet demo:
 
 ```powershell
-curl -X POST http://127.0.0.1:8080/payments/transaction-hash-proof ^
-  -H "Content-Type: application/json" ^
-  -d "{\"request_id\":\"<REQUEST_ID>\",\"payer\":\"<STELLAR_ACCOUNT>\",\"tx_hash\":\"<TX_HASH>\"}"
+python scripts/run_testnet_payment_demo.py --source-secret <FUNDED_TESTNET_SECRET>
 ```
 
-Capture `payment_token`.
+This script will:
+1. request a Safe4 paid-tool challenge
+2. submit the matching Stellar testnet payment
+3. exchange the tx hash for a Safe4 payment token
+4. retry the tool call and print the authorized result
 
 ### 3. Retry the same tool with payment proof
 

@@ -35,16 +35,20 @@ def _env_decimal(name: str, default: str) -> Decimal:
 
 def build_app() -> FastAPI:
     app = FastAPI(title="Safe4 Stellar Toolkit", version="0.1.0")
+    asset_code = os.getenv("SAFE4_STELLAR_ASSET_CODE", "USDC").strip() or "USDC"
+    asset_issuer = os.getenv(
+        "SAFE4_STELLAR_ASSET_ISSUER",
+        "GBRPYHIL2CEXAMPLETESTNETISSUERPLACEHOLDERXXXXXXXXXXXX",
+    ).strip()
+    if asset_code.upper() == "XLM":
+        asset_issuer = ""
 
     stellar_adapter = StellarPaymentAdapter(
         StellarConfig(
             verification_mode=os.getenv("SAFE4_STELLAR_VERIFICATION_MODE", "mock").strip() or "mock",
             network=os.getenv("SAFE4_STELLAR_NETWORK", "stellar-testnet").strip() or "stellar-testnet",
-            asset_code=os.getenv("SAFE4_STELLAR_ASSET_CODE", "USDC").strip() or "USDC",
-            asset_issuer=os.getenv(
-                "SAFE4_STELLAR_ASSET_ISSUER",
-                "GBRPYHIL2CEXAMPLETESTNETISSUERPLACEHOLDERXXXXXXXXXXXX",
-            ).strip(),
+            asset_code=asset_code,
+            asset_issuer=asset_issuer,
             destination=os.getenv(
                 "SAFE4_STELLAR_DESTINATION",
                 "GCR2XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
