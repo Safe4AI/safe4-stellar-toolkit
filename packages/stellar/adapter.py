@@ -6,6 +6,7 @@ import hmac
 import json
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
+from decimal import Decimal
 from typing import Any
 
 import httpx
@@ -71,6 +72,24 @@ class StellarPaymentAdapter:
         envelope = {"proof": proof, "signature": signature}
         return _base64url_encode(json.dumps(envelope, separators=(",", ":")).encode("utf-8"))
 
+    def build_transaction_hash_payment_token(
+        self,
+        *,
+        requirement: PaymentRequirement,
+        payer: str,
+        tx_hash: str,
+        payment_reference: str | None = None,
+    ) -> str:
+        proof = {
+            "mode": "transaction_hash",
+            "request_id": requirement.request_id,
+            "payer": payer,
+            "payment_reference": payment_reference or tx_hash,
+            "memo": requirement.memo,
+            "tx_hash": tx_hash,
+        }
+        return _base64url_encode(json.dumps(proof, sort_keys=True, separators=(",", ":")).encode("utf-8"))
+
     def parse_payment_token(self, token: str) -> PaymentProof:
         payload = json.loads(_base64url_decode(token).decode("utf-8"))
         if isinstance(payload, dict) and "proof" in payload and "signature" in payload:
@@ -103,13 +122,97 @@ class StellarPaymentAdapter:
     def _verify_transaction_hash(self, *, requirement: PaymentRequirement, proof: PaymentProof) -> PaymentProof:
         if not proof.tx_hash:
             raise ValueError("transaction_hash verification requires tx_hash.")
-        response = httpx.get(
-            f"{self.config.horizon_url.rstrip('/')}/transactions/{proof.tx_hash}",
-            timeout=10.0,
-        )
-        response.raise_for_status()
-        payload: dict[str, Any] = response.json()
-        memo = payload.get("memo")
+        transaction_payload = self._horizon_get_json(f"/transactions/{proof.tx_hash}")
+        if not bool(transaction_payload.get("successful")):
+            raise ValueError("Transaction hash did not resolve to a successful Stellar payment.")
+        memo = str(transaction_payload.get("memo") or "")
         if memo != requirement.memo:
             raise ValueError("Transaction memo does not match the Safe4 request.")
+        created_at = str(transaction_payload.get("created_at") or "")
+        if created_at:
+            if self._parse_horizon_timestamp(created_at) > requirement.expires_at:
+                raise ValueError("Transaction was submitted after the Safe4 payment challenge expired.")
+
+        operations_payload = self._horizon_get_json(f"/transactions/{proof.tx_hash}/operations")
+        records = self._extract_operation_records(operations_payload)
+        if not records:
+            raise ValueError("No payment operations were found for the supplied transaction hash.")
+
+        required_amount = Decimal(requirement.amount)
+        for operation in records:
+            if not self._operation_matches_payment_requirement(
+                operation=operation,
+                payer=proof.payer,
+                requirement=requirement,
+                required_amount=required_amount,
+            ):
+                continue
+            return proof
+        raise ValueError("No Stellar payment operation matched the Safe4 request requirements.")
         return proof
+
+    def _horizon_get_json(self, path: str) -> dict[str, Any]:
+        response = httpx.get(f"{self.config.horizon_url.rstrip('/')}{path}", timeout=10.0)
+        response.raise_for_status()
+        return response.json()
+
+    @staticmethod
+    def _parse_horizon_timestamp(value: str) -> datetime:
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        if parsed.tzinfo is None:
+            parsed = parsed.replace(tzinfo=timezone.utc)
+        return parsed.astimezone(timezone.utc)
+
+    @staticmethod
+    def _extract_operation_records(payload: dict[str, Any]) -> list[dict[str, Any]]:
+        embedded = payload.get("_embedded")
+        if isinstance(embedded, dict):
+            records = embedded.get("records")
+            if isinstance(records, list):
+                return [item for item in records if isinstance(item, dict)]
+        records = payload.get("records")
+        if isinstance(records, list):
+            return [item for item in records if isinstance(item, dict)]
+        return []
+
+    def _operation_matches_payment_requirement(
+        self,
+        *,
+        operation: dict[str, Any],
+        payer: str,
+        requirement: PaymentRequirement,
+        required_amount: Decimal,
+    ) -> bool:
+        operation_type = str(operation.get("type") or "")
+        if operation_type not in {"payment", "path_payment_strict_receive", "path_payment_strict_send"}:
+            return False
+        if str(operation.get("to") or "") != requirement.destination:
+            return False
+        sender = str(operation.get("from") or operation.get("source_account") or "")
+        if payer and sender and sender != payer:
+            return False
+        if not self._operation_matches_asset(operation=operation, requirement=requirement):
+            return False
+        operation_amount = self._operation_amount(operation)
+        if operation_amount is None or operation_amount < required_amount:
+            return False
+        return True
+
+    @staticmethod
+    def _operation_amount(operation: dict[str, Any]) -> Decimal | None:
+        raw = operation.get("amount")
+        if raw is None:
+            return None
+        try:
+            return Decimal(str(raw))
+        except Exception:
+            return None
+
+    def _operation_matches_asset(self, *, operation: dict[str, Any], requirement: PaymentRequirement) -> bool:
+        required_code = requirement.asset_code.upper()
+        if required_code == "XLM":
+            return str(operation.get("asset_type") or "").lower() == "native"
+        return (
+            str(operation.get("asset_code") or "").upper() == required_code
+            and str(operation.get("asset_issuer") or "") == requirement.asset_issuer
+        )

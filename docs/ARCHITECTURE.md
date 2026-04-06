@@ -16,7 +16,7 @@
 1. Client calls a paid tool endpoint.
 2. If no payment proof is present, Safe4 returns `402` and a request-bound
    Stellar payment requirement.
-3. Client settles the payment or uses the mock settlement path.
+3. Client settles the payment on Stellar testnet or uses the mock settlement path.
 4. Client retries the same request with payment proof bound to the request ID.
 5. Safe4 verifies the proof, enforces policy, and only then executes the tool.
 6. Safe4 returns tool output with receipt and audit records.
@@ -30,5 +30,6 @@
 ## Current Limits
 
 - default payment verification mode is mock for demo reliability
+- real transaction-hash verification is implemented, but the repo still relies on an external wallet or manual client to submit the Stellar payment
 - audit is append-only but lightweight, not a full forensic subsystem
 - policy is intentionally small and visible

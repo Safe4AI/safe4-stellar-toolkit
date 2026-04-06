@@ -111,3 +111,12 @@ class MockSettlementRequest(BaseModel):
 
     request_id: str = Field(..., min_length=1)
     payer: str = Field(..., min_length=3)
+
+
+class TransactionHashProofRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+
+    request_id: str = Field(..., min_length=1)
+    payer: str = Field(..., min_length=3)
+    tx_hash: str = Field(..., min_length=8)
+    payment_reference: str | None = Field(default=None, min_length=3)

@@ -12,7 +12,13 @@ from fastapi.responses import FileResponse, JSONResponse
 
 from packages.middleware.audit import AuditLog
 from packages.middleware.firewall import FirewallService
-from packages.middleware.models import FetchUrlRequest, MockSettlementRequest, RiskCheckRequest, SummariseRequest
+from packages.middleware.models import (
+    FetchUrlRequest,
+    MockSettlementRequest,
+    RiskCheckRequest,
+    SummariseRequest,
+    TransactionHashProofRequest,
+)
 from packages.policies.engine import PolicyConfig, PolicyEngine
 from packages.stellar.adapter import StellarConfig, StellarPaymentAdapter
 
@@ -86,13 +92,18 @@ def build_app() -> FastAPI:
     ) -> JSONResponse:
         token = _payment_token_from_authorization(authorization)
         if not token:
+            settle_path = (
+                "/payments/mock/settle"
+                if stellar_adapter.config.verification_mode == "mock"
+                else "/payments/transaction-hash-proof"
+            )
             pending = firewall.ensure_payment(
                 tool_name=tool_name,
                 amount=amount,
                 client_id=client_id,
                 risk_flag=risk_flag,
                 payload=payload,
-                settle_endpoint=str(request.base_url).rstrip("/") + "/payments/mock/settle",
+                settle_endpoint=str(request.base_url).rstrip("/") + settle_path,
             )
             return firewall.payment_required_response(pending)
         request_id = request_id_header or ""
@@ -188,6 +199,26 @@ def build_app() -> FastAPI:
             "request_id": body.request_id,
             "payment_token": token,
             "authorization_header": f"Payment {token}",
+        }
+
+    @app.post("/payments/transaction-hash-proof")
+    def transaction_hash_proof(body: TransactionHashProofRequest) -> dict[str, Any]:
+        pending = firewall.get_pending(body.request_id)
+        if pending is None:
+            raise HTTPException(status_code=404, detail="Unknown request_id.")
+        token = stellar_adapter.build_transaction_hash_payment_token(
+            requirement=pending.requirement,
+            payer=body.payer,
+            tx_hash=body.tx_hash,
+            payment_reference=body.payment_reference,
+        )
+        return {
+            "status": "proof_created",
+            "verification_mode": "transaction_hash",
+            "request_id": body.request_id,
+            "payment_token": token,
+            "authorization_header": f"Payment {token}",
+            "tx_hash": body.tx_hash,
         }
 
     @app.post("/tools/summarise")

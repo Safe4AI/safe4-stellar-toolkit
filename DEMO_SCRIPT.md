@@ -36,12 +36,40 @@ curl -X POST http://127.0.0.1:8080/tools/summarise ^
 
 Capture `request_id` from the `402` response.
 
-### 2. Mock settle the payment
+### 2A. Mock settle the payment
 
 ```powershell
 curl -X POST http://127.0.0.1:8080/payments/mock/settle ^
   -H "Content-Type: application/json" ^
   -d "{\"request_id\":\"<REQUEST_ID>\",\"payer\":\"GDEMO_PAYER_ACCOUNT\"}"
+```
+
+Capture `payment_token`.
+
+### 2B. Real Stellar testnet payment path
+
+Set:
+
+```powershell
+$env:SAFE4_STELLAR_VERIFICATION_MODE="transaction_hash"
+```
+
+Restart the server, request a paid tool again, and capture:
+- `request_id`
+- `payment_requirement.destination`
+- `payment_requirement.amount`
+- `payment_requirement.asset_code`
+- `payment_requirement.asset_issuer`
+- `payment_requirement.memo`
+
+Then submit a matching Stellar testnet payment and capture its `tx_hash`.
+
+Create the Safe4 proof token:
+
+```powershell
+curl -X POST http://127.0.0.1:8080/payments/transaction-hash-proof ^
+  -H "Content-Type: application/json" ^
+  -d "{\"request_id\":\"<REQUEST_ID>\",\"payer\":\"<STELLAR_ACCOUNT>\",\"tx_hash\":\"<TX_HASH>\"}"
 ```
 
 Capture `payment_token`.
@@ -66,4 +94,4 @@ curl http://127.0.0.1:8080/audit/entries
 
 If live Stellar testnet verification is not configured, use the mock settlement
 path above. The repo labels that clearly and keeps the Stellar transaction-hash
-verification seam separate.
+path as a reliable fallback.

@@ -34,6 +34,7 @@ and returns a receipt-backed tool response.
 - visible policy enforcement
 - receipt + audit output
 - mock settlement flow for fast demos
+- real transaction-hash verification against Stellar Horizon data
 - thin Stellar adapter with request-bound payment requirements
 
 ### Adapted from Safe4
@@ -49,3 +50,12 @@ and returns a receipt-backed tool response.
 - HITL approvals
 - anomaly scoring
 - enterprise operational scaffolding
+
+## Demo Positioning
+
+The repo supports two proof paths:
+
+- `mock`
+  - fastest and most reliable for a live hackathon demo
+- `transaction_hash`
+  - stronger submission claim because Safe4 validates a real Stellar testnet transaction against the request requirements

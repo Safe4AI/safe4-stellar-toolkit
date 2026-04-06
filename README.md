@@ -27,7 +27,7 @@ receipts.
   - `POST /tools/risk-check`
 - a thin Stellar payment adapter
 - a reliable mock settlement flow for hackathon demos
-- a real transaction-hash verification seam for future testnet hardening
+- a real Stellar transaction-hash verification path against Horizon data
 - visible policy controls:
   - max spend per request
   - deny on high risk flag
@@ -65,15 +65,22 @@ python apps/api/main.py
 Test:
 
 ```powershell
-python -m unittest -q
+python -m unittest discover -s tests -q
+```
+
+Optional screenshot capture for the submission:
+
+```powershell
+npm install
+npm run capture:screenshots
 ```
 
 ## Demo Flow
 
 1. Call a paid tool with no payment proof.
 2. Receive `402` plus a Stellar payment requirement.
-3. Settle the challenge through the demo settlement path.
-4. Retry the exact same tool call with `Authorization: Payment <token>`.
+3. Either settle through the mock path or pay on Stellar testnet and create a transaction-hash proof.
+4. Retry the exact same tool call with `Authorization: Payment <token>` and the original `X-Request-Id`.
 5. Safe4 verifies the payment context and runs policy checks.
 6. Tool output, receipt, and audit record are returned.
 
@@ -82,11 +89,35 @@ python -m unittest -q
 - `GET /health`
 - `GET /tools`
 - `POST /payments/mock/settle`
+- `POST /payments/transaction-hash-proof`
 - `POST /tools/summarise`
 - `POST /tools/fetch-url`
 - `POST /tools/risk-check`
 - `GET /audit/entries`
 - `GET /demo`
+
+## Real Testnet Path
+
+Set:
+
+```powershell
+$env:SAFE4_STELLAR_VERIFICATION_MODE="transaction_hash"
+```
+
+Then:
+1. call a paid tool and capture the returned `request_id`, destination, amount, asset, and memo
+2. submit a matching Stellar testnet payment with that memo
+3. exchange the tx hash for a Safe4 payment token at `POST /payments/transaction-hash-proof`
+4. retry the tool call with `Authorization: Payment <token>` and `X-Request-Id`
+
+Safe4 verifies:
+- transaction success
+- memo binding
+- challenge expiry
+- destination account
+- asset code and issuer
+- paid amount
+- payer binding
 
 ## Repo Layout
 

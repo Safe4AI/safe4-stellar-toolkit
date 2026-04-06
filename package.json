@@ -1,0 +1,12 @@
+{
+  "name": "safe4-stellar-toolkit",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Hackathon packaging helpers for Safe4 Stellar Toolkit",
+  "scripts": {
+    "capture:screenshots": "playwright test scripts/capture-demo.spec.js --reporter=line --workers=1"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.59.1"
+  }
+}
