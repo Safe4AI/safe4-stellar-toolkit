@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Safe4 Stellar Toolkit Demo</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 2rem auto; max-width: 880px; padding: 0 1rem; color: #112; }
+    pre { background: #f4f6fb; padding: 1rem; overflow: auto; border-radius: 8px; }
+    button { margin-right: 0.5rem; margin-top: 0.5rem; }
+    .row { display: flex; gap: 1rem; flex-wrap: wrap; }
+    .card { flex: 1 1 280px; border: 1px solid #d9dfec; border-radius: 10px; padding: 1rem; }
+  </style>
+</head>
+<body>
+  <h1>Safe4 Stellar Toolkit</h1>
+  <p>Paid AI tools on Stellar, with policy checks and receipts around every tool call.</p>
+
+  <div class="row">
+    <div class="card">
+      <h2>Step 1</h2>
+      <p>Call <code>/tools/summarise</code> without payment.</p>
+      <button id="challenge">Request payment challenge</button>
+    </div>
+    <div class="card">
+      <h2>Step 2</h2>
+      <p>Simulate a Stellar payment for the current request.</p>
+      <button id="settle">Mock settle</button>
+    </div>
+    <div class="card">
+      <h2>Step 3</h2>
+      <p>Retry the same tool call with the payment proof.</p>
+      <button id="retry">Retry paid call</button>
+    </div>
+  </div>
+
+  <h2>Response</h2>
+  <pre id="output">Click "Request payment challenge" to begin.</pre>
+
+  <script>
+    const payload = {
+      client_id: "demo-agent",
+      text: "Safe4 stands between an AI agent decision and payment execution. It requires payment proof, enforces policy, and returns a receipt-backed result.",
+      max_sentences: 2,
+      risk_flag: "low"
+    };
+
+    let requestId = null;
+    let paymentToken = null;
+
+    async function postJson(path, body, headers = {}) {
+      const response = await fetch(path, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...headers },
+        body: JSON.stringify(body)
+      });
+      const text = await response.text();
+      let parsed;
+      try { parsed = JSON.parse(text); } catch { parsed = { raw: text }; }
+      return { status: response.status, data: parsed };
+    }
+
+    document.getElementById("challenge").onclick = async () => {
+      const response = await postJson("/tools/summarise", payload);
+      requestId = response.data.request_id || null;
+      document.getElementById("output").textContent = JSON.stringify(response, null, 2);
+    };
+
+    document.getElementById("settle").onclick = async () => {
+      if (!requestId) {
+        document.getElementById("output").textContent = "Request a payment challenge first.";
+        return;
+      }
+      const response = await postJson("/payments/mock/settle", { request_id: requestId, payer: "GDEMO_PAYER_ACCOUNT" });
+      paymentToken = response.data.payment_token || null;
+      document.getElementById("output").textContent = JSON.stringify(response, null, 2);
+    };
+
+    document.getElementById("retry").onclick = async () => {
+      if (!paymentToken) {
+        document.getElementById("output").textContent = "Create a payment token first.";
+        return;
+      }
+      const response = await postJson("/tools/summarise", payload, { "Authorization": `Payment ${paymentToken}`, "X-Request-Id": requestId });
+      document.getElementById("output").textContent = JSON.stringify(response, null, 2);
+    };
+  </script>
+</body>
+</html>
