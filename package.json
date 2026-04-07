@@ -5,6 +5,7 @@
   "description": "Hackathon packaging helpers for Safe4 Stellar Toolkit",
   "scripts": {
     "capture:screenshots": "playwright test scripts/capture-demo.spec.js --reporter=line --workers=1",
+    "capture:public-proof": "playwright test scripts/capture-public-proof.spec.js --reporter=line --workers=1",
     "mpp:server": "node apps/mpp_demo/server.mjs",
     "mpp:client": "node apps/mpp_demo/client.mjs",
     "x402:facilitator": "node apps/x402_facilitator_demo/server.mjs",

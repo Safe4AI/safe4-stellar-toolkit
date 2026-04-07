@@ -134,3 +134,6 @@ The core claim is already real:
 
 That is the main Safe4 differentiation, regardless of which Stellar payment rail
 is used underneath.
+
+Public proof reference:
+- [`PUBLIC_PROOF.md`](PUBLIC_PROOF.md)

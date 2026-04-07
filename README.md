@@ -71,6 +71,8 @@ Protocol status:
   - `https://toolkit-api-production-a04c.up.railway.app/protocols/mpp/charge`
 - live MPP Charge sidecar:
   - `https://mpp-charge-demo-production.up.railway.app`
+- public proof index:
+  - [`docs/PUBLIC_PROOF.md`](docs/PUBLIC_PROOF.md)
 - verification notes:
   - [`docs/TESTNET_VERIFICATION.md`](docs/TESTNET_VERIFICATION.md)
 
@@ -149,6 +151,13 @@ Live public MPP Charge demo:
 - `https://mpp-charge-demo-production.up.railway.app/health`
 - `https://mpp-charge-demo-production.up.railway.app/mpp/service`
 
+Fresh public proof screenshots:
+- `docs/assets/public-demo-home.png`
+- `docs/assets/public-x402-status.png`
+- `docs/assets/public-x402-sidecar.png`
+- `docs/assets/public-mpp-status.png`
+- `docs/assets/public-mpp-sidecar-402.png`
+
 Run:
 
 ```powershell
@@ -172,6 +181,7 @@ Optional screenshot capture for the submission:
 ```powershell
 npm install
 npm run capture:screenshots
+npm run capture:public-proof
 ```
 
 ## Real Testnet Helpers

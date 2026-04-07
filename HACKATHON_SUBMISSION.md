@@ -86,8 +86,16 @@ The x402 preview currently includes:
   - `docs/assets/demo-home.png`
   - `docs/assets/demo-payment-required.png`
   - `docs/assets/demo-authorized.png`
+- public proof screenshots:
+  - `docs/assets/public-demo-home.png`
+  - `docs/assets/public-x402-status.png`
+  - `docs/assets/public-x402-sidecar.png`
+  - `docs/assets/public-mpp-status.png`
+  - `docs/assets/public-mpp-sidecar-402.png`
 - verified testnet note:
   - [`docs/TESTNET_VERIFICATION.md`](docs/TESTNET_VERIFICATION.md)
+- public proof index:
+  - [`docs/PUBLIC_PROOF.md`](docs/PUBLIC_PROOF.md)
 - public x402 facilitator inspection:
   - `https://toolkit-api-production-a04c.up.railway.app/protocols/x402/facilitator`
 - public MPP Charge inspection:

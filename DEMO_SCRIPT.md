@@ -53,6 +53,13 @@ Reference screenshots:
 - `docs/assets/demo-payment-required.png`
 - `docs/assets/demo-authorized.png`
 
+Public proof screenshots:
+- `docs/assets/public-demo-home.png`
+- `docs/assets/public-x402-status.png`
+- `docs/assets/public-x402-sidecar.png`
+- `docs/assets/public-mpp-status.png`
+- `docs/assets/public-mpp-sidecar-402.png`
+
 ## Option B: Curl Demo
 
 ### 1. Request a paid tool
