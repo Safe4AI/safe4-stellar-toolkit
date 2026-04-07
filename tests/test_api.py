@@ -127,6 +127,9 @@ class Safe4StellarToolkitTests(unittest.TestCase):
         audit = self.client.get("/audit/entries")
         self.assertEqual(audit.status_code, 200)
         self.assertIn("entries", audit.json())
+        reviews = self.client.get("/reviews")
+        self.assertEqual(reviews.status_code, 200)
+        self.assertIn("reviews", reviews.json())
         protocols = self.client.get("/protocols/status")
         self.assertEqual(protocols.status_code, 200)
         self.assertEqual(protocols.json()["primary_demo_target"], "x402")
@@ -631,6 +634,104 @@ class Safe4StellarToolkitTests(unittest.TestCase):
         self.assertEqual(reviewed.json()["external_risk"]["status"], "not_configured")
         self.assertIn("range_not_configured_for_wallet_risk", reviewed.json()["policy"]["reasons"])
         self.assertIn("receipt", reviewed.json())
+        self.assertIn("review", reviewed.json())
+        self.assertEqual(reviewed.json()["review"]["status"], "pending")
+
+        review_lookup = self.client.get(f"/reviews/{challenge['request_id']}")
+        self.assertEqual(review_lookup.status_code, 200)
+        self.assertEqual(review_lookup.json()["status"], "pending")
+
+    def test_review_approval_allows_same_paid_request_on_retry(self) -> None:
+        payload = {
+            "client_id": "wallet-agent",
+            "text": "A pending wallet-aware review should be releasable without rebuilding the payment proof.",
+            "max_sentences": 1,
+            "risk_flag": "low",
+            "sender_address": "GAAA111111111111111",
+            "recipient_address": "GBBB222222222222222",
+        }
+        first = self.client.post("/tools/summarise", json=payload)
+        challenge = first.json()
+        settle = self.client.post(
+            "/payments/mock/settle",
+            json={"request_id": challenge["request_id"], "payer": "GAAA111111111111111"},
+        )
+        token = settle.json()["payment_token"]
+
+        reviewed = self.client.post(
+            "/tools/summarise",
+            json=payload,
+            headers={
+                "Authorization": f"Payment {token}",
+                "X-Request-Id": challenge["request_id"],
+            },
+        )
+        self.assertEqual(reviewed.status_code, 409)
+
+        approved = self.client.post(
+            f"/reviews/{challenge['request_id']}/approve",
+            json={"note": "demo approval"},
+        )
+        self.assertEqual(approved.status_code, 200)
+        self.assertEqual(approved.json()["review"]["status"], "approved")
+
+        authorized = self.client.post(
+            "/tools/summarise",
+            json=payload,
+            headers={
+                "Authorization": f"Payment {token}",
+                "X-Request-Id": challenge["request_id"],
+            },
+        )
+        self.assertEqual(authorized.status_code, 200)
+        self.assertEqual(authorized.json()["policy"]["decision"], "allow")
+        self.assertIn("manual_review_approved", authorized.json()["policy"]["reasons"])
+
+    def test_review_rejection_turns_same_paid_request_into_denial(self) -> None:
+        payload = {
+            "client_id": "wallet-agent",
+            "text": "A rejected review should convert the same paid request into a denial on retry.",
+            "max_sentences": 1,
+            "risk_flag": "low",
+            "sender_address": "GAAA111111111111111",
+            "recipient_address": "GBBB222222222222222",
+        }
+        first = self.client.post("/tools/summarise", json=payload)
+        challenge = first.json()
+        settle = self.client.post(
+            "/payments/mock/settle",
+            json={"request_id": challenge["request_id"], "payer": "GAAA111111111111111"},
+        )
+        token = settle.json()["payment_token"]
+
+        reviewed = self.client.post(
+            "/tools/summarise",
+            json=payload,
+            headers={
+                "Authorization": f"Payment {token}",
+                "X-Request-Id": challenge["request_id"],
+            },
+        )
+        self.assertEqual(reviewed.status_code, 409)
+
+        rejected = self.client.post(
+            f"/reviews/{challenge['request_id']}/reject",
+            json={"note": "demo rejection"},
+        )
+        self.assertEqual(rejected.status_code, 200)
+        self.assertEqual(rejected.json()["review"]["status"], "rejected")
+
+        denied = self.client.post(
+            "/tools/summarise",
+            json=payload,
+            headers={
+                "Authorization": f"Payment {token}",
+                "X-Request-Id": challenge["request_id"],
+            },
+        )
+        self.assertEqual(denied.status_code, 403)
+        self.assertEqual(denied.json()["policy"]["decision"], "deny")
+        self.assertIn("manual_review_rejected", denied.json()["policy"]["reasons"])
 
     def test_wallet_aware_paid_call_denies_on_range_high_risk(self) -> None:
         payment_payload = {

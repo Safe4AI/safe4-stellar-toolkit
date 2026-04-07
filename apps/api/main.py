@@ -17,9 +17,11 @@ from packages.middleware.models import (
     MockSettlementRequest,
     PolicyDecision,
     RiskCheckRequest,
+    ReviewDecisionRequest,
     SummariseRequest,
     TransactionHashProofRequest,
 )
+from packages.middleware.reviews import ReviewQueue
 from packages.policies.engine import PolicyConfig, PolicyEngine
 from packages.policies.range import RangeRiskClient, RangeRiskConfig
 from packages.protocols.mpp import MppChargeServiceClient, build_mpp_charge_guide
@@ -101,6 +103,7 @@ def build_app() -> FastAPI:
         policy_engine=policy_engine,
         stellar_adapter=stellar_adapter,
         audit_log=AuditLog(log_path=AUDIT_LOG_PATH),
+        review_queue=ReviewQueue(),
     )
 
     tool_prices = {
@@ -264,6 +267,7 @@ def build_app() -> FastAPI:
                     "payment": details.get("payment"),
                     "receipt": details.get("receipt"),
                     "external_risk": details.get("external_risk"),
+                    "review": details.get("review"),
                     "audit": {"audit_id": details["audit_id"]},
                 },
             )
@@ -646,6 +650,39 @@ def build_app() -> FastAPI:
     @app.get("/audit/entries")
     def list_audit_entries() -> dict[str, Any]:
         return {"entries": [record.model_dump(mode="json") for record in firewall.audit_log.list_records()]}
+
+    @app.get("/reviews")
+    def list_reviews() -> dict[str, Any]:
+        return {"reviews": [record.model_dump(mode="json") for record in firewall.review_queue.list_records()]}
+
+    @app.get("/reviews/{request_id}")
+    def get_review(request_id: str) -> dict[str, Any]:
+        review = firewall.review_queue.get(request_id)
+        if review is None:
+            raise HTTPException(status_code=404, detail="Unknown request_id.")
+        return review.model_dump(mode="json")
+
+    @app.post("/reviews/{request_id}/approve")
+    def approve_review(request_id: str, body: ReviewDecisionRequest | None = None) -> dict[str, Any]:
+        review = firewall.review_queue.decide(
+            request_id=request_id,
+            decision="allow",
+            note=(body.note if body is not None else None),
+        )
+        if review is None:
+            raise HTTPException(status_code=404, detail="Unknown request_id.")
+        return {"status": "approved", "review": review.model_dump(mode="json")}
+
+    @app.post("/reviews/{request_id}/reject")
+    def reject_review(request_id: str, body: ReviewDecisionRequest | None = None) -> dict[str, Any]:
+        review = firewall.review_queue.decide(
+            request_id=request_id,
+            decision="deny",
+            note=(body.note if body is not None else None),
+        )
+        if review is None:
+            raise HTTPException(status_code=404, detail="Unknown request_id.")
+        return {"status": "rejected", "review": review.model_dump(mode="json")}
 
     @app.post("/payments/mock/settle")
     def mock_settle(body: MockSettlementRequest) -> dict[str, Any]:

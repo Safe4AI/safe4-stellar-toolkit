@@ -68,6 +68,21 @@ class AuditRecord(BaseModel):
     policy_reasons: list[str] = Field(default_factory=list)
 
 
+class ReviewRecord(BaseModel):
+    review_id: str
+    request_id: str
+    tool_name: str
+    status: Literal["pending", "approved", "rejected"]
+    created_at: datetime
+    resolved_at: datetime | None = None
+    reasons: list[str] = Field(default_factory=list)
+    payment_reference: str | None = None
+    payment: dict[str, Any] | None = None
+    receipt: dict[str, Any] | None = None
+    external_risk: dict[str, Any] | None = None
+    note: str | None = None
+
+
 class ToolExecutionResponse(BaseModel):
     status: Literal["AUTHORIZED"]
     request_id: str
@@ -146,3 +161,9 @@ class TransactionHashProofRequest(BaseModel):
     payer: str = Field(..., min_length=3)
     tx_hash: str = Field(..., min_length=8)
     payment_reference: str | None = Field(default=None, min_length=3)
+
+
+class ReviewDecisionRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+
+    note: str | None = Field(default=None, max_length=500)

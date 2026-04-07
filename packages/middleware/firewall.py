@@ -13,6 +13,7 @@ from fastapi.responses import JSONResponse
 
 from packages.middleware.audit import AuditLog
 from packages.middleware.models import PaymentRequirement, PolicyDecision, ReceiptRecord, ToolExecutionResponse
+from packages.middleware.reviews import ReviewQueue
 from packages.policies.engine import PolicyEngine
 from packages.protocols.mpp import build_mpp_charge_required_header
 from packages.protocols.x402 import build_x402_required_header
@@ -37,10 +38,12 @@ class FirewallService:
         policy_engine: PolicyEngine,
         stellar_adapter: StellarPaymentAdapter,
         audit_log: AuditLog,
+        review_queue: ReviewQueue,
     ) -> None:
         self.policy_engine = policy_engine
         self.stellar_adapter = stellar_adapter
         self.audit_log = audit_log
+        self.review_queue = review_queue
         self._pending: dict[str, PendingToolCall] = {}
         self._lock = threading.Lock()
 
@@ -132,6 +135,19 @@ class FirewallService:
             risk_flag=pending.risk_flag,
         )
         policy = self.merge_policy(local_policy=local_policy, external_policy=external_policy)
+        review_override = self.review_queue.get_override(request_id)
+        if policy.decision == "review" and review_override == "allow":
+            policy = PolicyDecision(
+                decision="allow",
+                reasons=list(policy.reasons) + ["manual_review_approved"],
+                rate_limit_remaining=policy.rate_limit_remaining,
+            )
+        elif policy.decision == "review" and review_override == "deny":
+            policy = PolicyDecision(
+                decision="deny",
+                reasons=list(policy.reasons) + ["manual_review_rejected"],
+                rate_limit_remaining=policy.rate_limit_remaining,
+            )
         payment = {
             "network": pending.requirement.network,
             "asset_code": pending.requirement.asset_code,
@@ -158,6 +174,17 @@ class FirewallService:
             policy_reasons=policy.reasons,
         )
         if policy.decision != "allow":
+            review_record = None
+            if policy.decision == "review":
+                review_record = self.review_queue.create_pending(
+                    request_id=request_id,
+                    tool_name=tool_name,
+                    reasons=policy.reasons,
+                    payment_reference=proof.payment_reference,
+                    payment=payment,
+                    receipt=receipt.model_dump(mode="json"),
+                    external_risk=external_risk,
+                )
             raise PermissionError(
                 json.dumps(
                     {
@@ -167,6 +194,7 @@ class FirewallService:
                         "payment": payment,
                         "receipt": receipt.model_dump(mode="json"),
                         "external_risk": external_risk,
+                        "review": review_record.model_dump(mode="json") if review_record is not None else None,
                     }
                 )
             )

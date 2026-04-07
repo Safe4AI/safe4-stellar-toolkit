@@ -214,6 +214,7 @@ Wallet-aware live enforcement:
   - `review` -> tool is held and returns `review_required`
   - `deny` -> tool is blocked and returns `denied`
 - when wallet context is supplied but Range is not configured, the toolkit currently fails safe to `review_required`
+- `review_required` requests now enter a lightweight review queue and can be released or rejected on the same `request_id`
 
 ## Real Testnet Helpers
 
@@ -238,6 +239,11 @@ python scripts/run_testnet_payment_demo.py --source-secret <STELLAR_SECRET>
 5. The server verifies the payment context and runs policy checks.
 6. Tool output, receipt, and audit record are returned.
 
+If a request returns `review_required`:
+1. inspect `GET /reviews/{request_id}`
+2. approve or reject the review
+3. retry the same paid request with the same payment token and `X-Request-Id`
+
 ## Primary Endpoints
 
 - `GET /health`
@@ -248,10 +254,14 @@ python scripts/run_testnet_payment_demo.py --source-secret <STELLAR_SECRET>
 - `GET /protocols/mpp/session`
 - `GET /policies/status`
 - `GET /policies/evaluate`
+- `GET /reviews`
+- `GET /reviews/{request_id}`
 - `POST /payments/mock/settle`
 - `POST /payments/transaction-hash-proof`
 - `GET /payments/x402/guide`
 - `GET /payments/mpp/charge/guide`
+- `POST /reviews/{request_id}/approve`
+- `POST /reviews/{request_id}/reject`
 - `GET /risk/range/address`
 - `GET /risk/range/payment`
 - `GET /risk/range/sanctions/{address}`
