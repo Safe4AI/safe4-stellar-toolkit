@@ -255,7 +255,7 @@ def build_app() -> FastAPI:
             "notes": [
                 "This preview expects a client or wallet that can produce an x402 PAYMENT-SIGNATURE payload.",
                 "For live Stellar x402, use an auth-entry-signing wallet and a facilitator such as the OpenZeppelin or Coinbase-compatible x402 endpoints.",
-                "The current strongest proof path in this repo remains transaction_hash mode unless a facilitator is configured.",
+                "The current strongest live proof path in this deployment remains transaction_hash mode unless x402_facilitator_preview is enabled.",
             ],
         }
 

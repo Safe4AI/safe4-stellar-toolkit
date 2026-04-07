@@ -89,12 +89,13 @@ def protocol_status(*, verification_mode: str) -> dict[str, Any]:
             f"{verification_mode} proof path",
         ],
         "missing": [
-            "stellar facilitator integration",
             "auth-entry signing client flow",
-            "PAYMENT-SIGNATURE retry format",
-            "production-grade settlement service",
+            "wallet-driven PAYMENT-SIGNATURE generation",
+            "production-grade facilitator settlement service",
         ],
     }
+    if verification_mode == "x402_facilitator_preview":
+        x402_status["implemented"].append("facilitator verify and settle preview seam")
     mpp_charge_status = {
         "status": "planned",
         "implemented": [
