@@ -146,6 +146,7 @@ class Safe4StellarToolkitTests(unittest.TestCase):
         self.assertIn("PAYMENT-SIGNATURE", body["client_retry_headers"])
         self.assertIn("hosted_channels", body["deployment_options"])
         self.assertIn("self_hosted_relayer_plugin", body["deployment_options"])
+        self.assertTrue(body["deployment_options"]["self_hosted_relayer_plugin"]["may_require_relayer_api_key"])
 
     def test_mpp_charge_and_session_endpoints_exist(self) -> None:
         charge = self.client.get("/protocols/mpp/charge")

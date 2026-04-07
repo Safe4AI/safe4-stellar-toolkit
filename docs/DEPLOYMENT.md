@@ -72,6 +72,7 @@ SAFE4_X402_FACILITATOR_API_KEY=
 
 Reference:
 - [`docs/X402_FACILITATOR_SETUP.md`](X402_FACILITATOR_SETUP.md)
+- [`docs/X402_RELAYER_DEMO.md`](X402_RELAYER_DEMO.md)
 
 ### Optional MPP Charge preview config
 

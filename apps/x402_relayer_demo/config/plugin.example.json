@@ -1,0 +1,8 @@
+{
+  "id": "x402-facilitator",
+  "package": "@openzeppelin/relayer-plugin-x402-facilitator",
+  "network": "stellar:testnet",
+  "facilitator": {
+    "recipient": "GXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+  }
+}

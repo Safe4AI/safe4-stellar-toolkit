@@ -92,6 +92,9 @@ Facilitator deployment options:
 - hosted OpenZeppelin Channels
 - self-hosted OpenZeppelin Relayer x402 plugin
 
+Self-hosted demo scaffold:
+- [`docs/X402_RELAYER_DEMO.md`](X402_RELAYER_DEMO.md)
+
 ### Optional MPP Charge preview path
 
 - `mpp_charge_preview`

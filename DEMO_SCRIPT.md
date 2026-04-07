@@ -109,6 +109,7 @@ x402 seam without overclaiming complete wallet integration.
 
 If you want to point reviewers at a concrete self-hosted path, use:
 - [`docs/X402_FACILITATOR_SETUP.md`](docs/X402_FACILITATOR_SETUP.md)
+- [`docs/X402_RELAYER_DEMO.md`](docs/X402_RELAYER_DEMO.md)
 
 ### 2D. Optional MPP Charge preview
 

@@ -263,9 +263,11 @@ def build_app() -> FastAPI:
                 "self_hosted_relayer_plugin": {
                     "base_url_pattern": "http://localhost:8080/api/v1/plugins/x402-facilitator/call",
                     "requires_hosted_channels_api_key": False,
+                    "may_require_relayer_api_key": True,
                     "notes": [
                         "This path expects you to run the OpenZeppelin Relayer plugin yourself.",
                         "The plugin exposes /verify, /settle, and /supported under the /call router.",
+                        "Set SAFE4_X402_FACILITATOR_API_KEY to your Relayer API key if the plugin route is bearer-protected.",
                     ],
                 },
             },
