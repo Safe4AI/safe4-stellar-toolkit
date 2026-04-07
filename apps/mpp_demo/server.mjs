@@ -1,9 +1,10 @@
 import express from "express";
 import { Mppx } from "mppx/server";
-import { stellar, USDC_SAC_TESTNET } from "@stellar/mpp/charge/server";
+import { USDC_SAC_TESTNET } from "@stellar/mpp";
+import { stellar } from "@stellar/mpp/charge/server";
 import { Keypair } from "@stellar/stellar-sdk";
 
-const PORT = Number.parseInt(process.env.MPP_DEMO_PORT || "3001", 10);
+const PORT = Number.parseInt(process.env.PORT || process.env.MPP_DEMO_PORT || "3001", 10);
 const RECIPIENT = (process.env.STELLAR_RECIPIENT || "").trim();
 const MPP_SECRET_KEY = (process.env.MPP_SECRET_KEY || "").trim();
 const NETWORK = (process.env.MPP_NETWORK || "stellar:testnet").trim();
@@ -41,6 +42,16 @@ const mppx = Mppx.create({
 
 const app = express();
 
+app.get("/", (_req, res) => {
+  res.json({
+    name: "safe4-mpp-charge-demo",
+    status: "ok",
+    protocol: "mpp-charge-demo",
+    network: NETWORK,
+    endpoints: ["/health", "/mpp/service"],
+  });
+});
+
 function toWebRequest(req) {
   const headers = new Headers();
   for (const [key, value] of Object.entries(req.headers)) {
@@ -72,6 +83,7 @@ app.get("/health", (_req, res) => {
     network: NETWORK,
     recipient: RECIPIENT,
     sponsoredFees: Boolean(feePayer),
+    currency: ASSET,
   });
 });
 

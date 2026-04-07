@@ -5,6 +5,8 @@ import json
 from datetime import timezone
 from typing import Any
 
+import httpx
+
 from packages.middleware.models import PaymentRequirement
 from packages.protocols.x402 import protocol_network_id
 
@@ -60,3 +62,24 @@ def build_mpp_charge_guide(*, requirement: PaymentRequirement | None = None) -> 
     if requirement is not None:
         base["request"] = build_mpp_charge_request(requirement=requirement)
     return base
+
+
+class MppChargeServiceClient:
+    def __init__(self, *, url: str | None, timeout_seconds: float = 10.0) -> None:
+        self.url = (url or "").rstrip("/")
+        self.timeout_seconds = timeout_seconds
+
+    @property
+    def configured(self) -> bool:
+        return bool(self.url)
+
+    def health(self) -> dict[str, Any]:
+        if not self.configured:
+            return {"configured": False, "status": "not_configured"}
+        response = httpx.get(f"{self.url}/health", timeout=self.timeout_seconds)
+        response.raise_for_status()
+        body = response.json()
+        if isinstance(body, dict):
+            body["configured"] = True
+            return body
+        return {"configured": True, "status": "ok", "body": body}

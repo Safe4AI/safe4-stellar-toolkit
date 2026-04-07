@@ -153,6 +153,7 @@ class Safe4StellarToolkitTests(unittest.TestCase):
         self.assertEqual(charge.status_code, 200)
         self.assertEqual(charge.json()["status"], "preview")
         self.assertEqual(charge.json()["sdk"], "@stellar/mpp")
+        self.assertFalse(charge.json()["service"]["configured"])
 
         session = self.client.get("/protocols/mpp/session")
         self.assertEqual(session.status_code, 200)
@@ -162,6 +163,11 @@ class Safe4StellarToolkitTests(unittest.TestCase):
         self.assertEqual(guide.status_code, 200)
         self.assertEqual(guide.json()["status"], "preview")
         self.assertEqual(guide.json()["protocol"], "mpp-charge-preview")
+        self.assertFalse(guide.json()["service"]["configured"])
+
+        service = self.client.get("/protocols/mpp/charge/service")
+        self.assertEqual(service.status_code, 200)
+        self.assertFalse(service.json()["configured"])
 
     def test_transaction_hash_verification_authorizes_with_matching_horizon_data(self) -> None:
         payload = {
@@ -419,3 +425,31 @@ class Safe4StellarToolkitTests(unittest.TestCase):
             self.assertEqual(protocols.status_code, 200)
             self.assertEqual(protocols.json()["mpp_charge"]["status"], "preview")
             self.assertEqual(protocols.json()["primary_demo_target"], "mpp_charge")
+
+    def test_mpp_charge_service_status_reports_live_sidecar_when_configured(self) -> None:
+        service_payload = {
+            "status": "ok",
+            "protocol": "mpp-charge-demo",
+            "network": "stellar:testnet",
+            "recipient": "GRECIPIENTXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+            "sponsoredFees": False,
+            "currency": "USDC_SAC_TESTNET",
+        }
+        with patch.dict(
+            os.environ,
+            {
+                "SAFE4_MPP_CHARGE_SERVICE_URL": "https://mpp-charge-demo.example",
+            },
+            clear=False,
+        ):
+            with patch("packages.protocols.mpp.httpx.get", return_value=FakeHttpResponse(service_payload)):
+                client = TestClient(build_app())
+                charge = client.get("/protocols/mpp/charge")
+                self.assertEqual(charge.status_code, 200)
+                self.assertTrue(charge.json()["service"]["configured"])
+                self.assertEqual(charge.json()["service"]["protocol"], "mpp-charge-demo")
+
+                service = client.get("/protocols/mpp/charge/service")
+                self.assertEqual(service.status_code, 200)
+                self.assertEqual(service.json()["url"], "https://mpp-charge-demo.example")
+                self.assertTrue(service.json()["health"]["configured"])

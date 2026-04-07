@@ -77,6 +77,8 @@ The x402 preview currently includes:
 - locally verified end-to-end facilitator authorize flow
 - public facilitator sidecar deployment under our control
 - public toolkit inspection endpoint that resolves against that sidecar
+- public MPP Charge sidecar using the official Stellar SDK path
+- public toolkit inspection endpoint that resolves against that sidecar
 
 ## Evidence
 
@@ -88,3 +90,5 @@ The x402 preview currently includes:
   - [`docs/TESTNET_VERIFICATION.md`](docs/TESTNET_VERIFICATION.md)
 - public x402 facilitator inspection:
   - `https://toolkit-api-production-a04c.up.railway.app/protocols/x402/facilitator`
+- public MPP Charge inspection:
+  - `https://toolkit-api-production-a04c.up.railway.app/protocols/mpp/charge`

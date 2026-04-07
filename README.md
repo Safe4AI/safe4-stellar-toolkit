@@ -39,6 +39,7 @@ receipts.
 - public x402 facilitator demo sidecar under our control
 - MPP Charge preview guide and challenge framing
 - Node sidecar demo for real `@stellar/mpp` Charge flows
+- public MPP Charge sidecar under our control
 - visible policy controls:
   - max spend per request
   - deny on high risk flag
@@ -66,6 +67,10 @@ Protocol status:
   - `https://toolkit-api-production-a04c.up.railway.app/protocols/x402/facilitator`
 - live x402 facilitator sidecar:
   - `https://x402-facilitator-demo-production.up.railway.app`
+- live MPP Charge inspection path:
+  - `https://toolkit-api-production-a04c.up.railway.app/protocols/mpp/charge`
+- live MPP Charge sidecar:
+  - `https://mpp-charge-demo-production.up.railway.app`
 - verification notes:
   - [`docs/TESTNET_VERIFICATION.md`](docs/TESTNET_VERIFICATION.md)
 
@@ -139,6 +144,10 @@ npm run mpp:client
 
 Reference:
 - [`docs/MPP_CHARGE_DEMO.md`](docs/MPP_CHARGE_DEMO.md)
+
+Live public MPP Charge demo:
+- `https://mpp-charge-demo-production.up.railway.app/health`
+- `https://mpp-charge-demo-production.up.railway.app/mpp/service`
 
 Run:
 

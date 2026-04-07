@@ -146,6 +146,12 @@ curl http://127.0.0.1:8080/protocols/mpp/charge
 curl http://127.0.0.1:8080/payments/mpp/charge/guide
 ```
 
+Public inspection URLs:
+- `https://toolkit-api-production-a04c.up.railway.app/protocols/mpp/charge`
+- `https://toolkit-api-production-a04c.up.railway.app/protocols/mpp/charge/service`
+- `https://mpp-charge-demo-production.up.railway.app/health`
+- `https://mpp-charge-demo-production.up.railway.app/mpp/service`
+
 Then request a paid tool and show that the `402` response now carries:
 - `X-Payment-Protocol: mpp-charge-preview`
 - `MPP-CHARGE-REQUIRED`

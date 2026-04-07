@@ -56,9 +56,11 @@ Implemented now:
 - the repo already uses a payment-auth shaped request/retry model
 - the current request binding and receipt model is compatible with a later MPP path
 - `GET /protocols/mpp/charge`
+- `GET /protocols/mpp/charge/service`
 - `GET /payments/mpp/charge/guide`
 - `mpp_charge_preview` challenge framing
 - local Node sidecar demo based on `@stellar/mpp`
+- public Node sidecar demo returning a real MPP `402` challenge
 
 Not yet implemented:
 - `@stellar/mpp` charge flow
@@ -108,6 +110,12 @@ Use this when you want to show:
 - Safe4 can frame a one-time MPP charge challenge
 - request-bound payment metadata for a future `@stellar/mpp` flow
 - a clean path toward pull, push, and sponsored-fee support without claiming it is done
+
+Public inspection URLs:
+- `https://toolkit-api-production-a04c.up.railway.app/protocols/mpp/charge`
+- `https://toolkit-api-production-a04c.up.railway.app/protocols/mpp/charge/service`
+- `https://mpp-charge-demo-production.up.railway.app/health`
+- `https://mpp-charge-demo-production.up.railway.app/mpp/service`
 
 ### Reliable fallback
 

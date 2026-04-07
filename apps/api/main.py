@@ -20,7 +20,7 @@ from packages.middleware.models import (
     TransactionHashProofRequest,
 )
 from packages.policies.engine import PolicyConfig, PolicyEngine
-from packages.protocols.mpp import build_mpp_charge_guide
+from packages.protocols.mpp import MppChargeServiceClient, build_mpp_charge_guide
 from packages.protocols.x402 import (
     build_x402_required_header,
     build_x402_response_header,
@@ -66,6 +66,7 @@ def build_app() -> FastAPI:
             x402_facilitator_api_key=os.getenv("SAFE4_X402_FACILITATOR_API_KEY"),
         )
     )
+    mpp_charge_service = MppChargeServiceClient(url=os.getenv("SAFE4_MPP_CHARGE_SERVICE_URL"))
     policy_engine = PolicyEngine(
         PolicyConfig(
             max_spend_per_request=_env_decimal("SAFE4_STELLAR_MAX_SPEND_PER_REQUEST", "2.000000"),
@@ -280,16 +281,41 @@ def build_app() -> FastAPI:
 
     @app.get("/protocols/mpp/charge")
     def get_mpp_charge_status() -> dict[str, Any]:
+        try:
+            service = mpp_charge_service.health()
+        except Exception as exc:
+            service = {
+                "configured": mpp_charge_service.configured,
+                "status": "unreachable",
+                "error": str(exc),
+            }
         return {
             "status": "preview",
             "verification_mode": stellar_adapter.config.verification_mode,
             "sdk": "@stellar/mpp",
             "supported_modes": ["pull", "push", "sponsored-fee-preview"],
+            "service": service,
             "notes": [
                 "MPP Charge is exposed here as a preview protocol surface.",
                 "The toolkit does not yet run a full @stellar/mpp verification backend in Python.",
                 "Use transaction_hash mode for the strongest live demo proof today.",
             ],
+        }
+
+    @app.get("/protocols/mpp/charge/service")
+    def get_mpp_charge_service() -> dict[str, Any]:
+        try:
+            health = mpp_charge_service.health()
+        except Exception as exc:
+            health = {
+                "configured": mpp_charge_service.configured,
+                "status": "unreachable",
+                "error": str(exc),
+            }
+        return {
+            "configured": mpp_charge_service.configured,
+            "url": mpp_charge_service.url if mpp_charge_service.configured else None,
+            "health": health,
         }
 
     @app.get("/protocols/mpp/session")
@@ -308,6 +334,10 @@ def build_app() -> FastAPI:
         requirement = pending.requirement if pending is not None else None
         body = build_mpp_charge_guide(requirement=requirement)
         body["verification_mode"] = stellar_adapter.config.verification_mode
+        body["service"] = {
+            "configured": mpp_charge_service.configured,
+            "url": mpp_charge_service.url if mpp_charge_service.configured else None,
+        }
         return body
 
     @app.get("/audit/entries")
