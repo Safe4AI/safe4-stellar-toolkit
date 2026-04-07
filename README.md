@@ -35,6 +35,7 @@ receipts.
   - `PAYMENT-REQUIRED`
   - `PAYMENT-SIGNATURE`
   - `PAYMENT-RESPONSE`
+- optional facilitator-aware x402 preview seam
 - visible policy controls:
   - max spend per request
   - deny on high risk flag
@@ -89,6 +90,18 @@ SAFE4_STELLAR_ASSET_ISSUER=
 
 and set `SAFE4_STELLAR_DESTINATION` to a funded Stellar testnet receiving account.
 
+Optional x402 preview configuration:
+
+```powershell
+SAFE4_STELLAR_VERIFICATION_MODE=x402_facilitator_preview
+SAFE4_X402_FACILITATOR_URL=https://channels.openzeppelin.com/x402/testnet
+SAFE4_X402_FACILITATOR_API_KEY=<OPTIONAL_TESTNET_API_KEY>
+```
+
+In that mode, inspect:
+- `GET /protocols/x402/facilitator`
+- `GET /payments/x402/guide`
+
 Run:
 
 ```powershell
@@ -142,8 +155,10 @@ python scripts/run_testnet_payment_demo.py --source-secret <STELLAR_SECRET>
 - `GET /health`
 - `GET /tools`
 - `GET /protocols/status`
+- `GET /protocols/x402/facilitator`
 - `POST /payments/mock/settle`
 - `POST /payments/transaction-hash-proof`
+- `GET /payments/x402/guide`
 - `POST /tools/summarise`
 - `POST /tools/fetch-url`
 - `POST /tools/risk-check`
@@ -178,7 +193,7 @@ The verifier checks:
 - current strongest live path:
   - real Stellar testnet transaction-hash verification
 - current x402 status:
-  - preview wire/header surface
+  - preview wire/header surface with optional facilitator seam
 - current MPP status:
   - planned
 

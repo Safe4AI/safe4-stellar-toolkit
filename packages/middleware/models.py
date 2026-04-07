@@ -31,17 +31,21 @@ class PaymentRequirement(BaseModel):
     expires_at: datetime
     verification_mode: str
     settle_endpoint: str
+    resource_url: str | None = None
+    description: str | None = None
 
 
 class PaymentProof(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
 
-    mode: Literal["mock", "transaction_hash"]
+    mode: Literal["mock", "transaction_hash", "x402_facilitator"]
     request_id: str
     payer: str = Field(..., min_length=3)
     payment_reference: str = Field(..., min_length=3)
     memo: str = Field(..., min_length=1)
     tx_hash: str | None = None
+    raw_payload: dict[str, Any] | None = None
+    settlement_response: dict[str, Any] | None = None
 
 
 class ReceiptRecord(BaseModel):

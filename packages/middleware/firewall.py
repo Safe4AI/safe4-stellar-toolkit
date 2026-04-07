@@ -56,12 +56,16 @@ class FirewallService:
         risk_flag: str,
         payload: dict[str, Any],
         settle_endpoint: str,
+        resource_url: str | None = None,
+        description: str | None = None,
     ) -> PendingToolCall:
         request_id = uuid4().hex
         requirement = self.stellar_adapter.build_requirement(
             request_id=request_id,
             amount=format(amount, "f"),
             settle_endpoint=settle_endpoint,
+            resource_url=resource_url,
+            description=description,
         )
         pending = PendingToolCall(
             request_id=request_id,

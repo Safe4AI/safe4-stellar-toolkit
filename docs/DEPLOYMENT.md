@@ -33,6 +33,10 @@ Minimum safe defaults:
   - default testnet Horizon endpoint is already wired
 - `SAFE4_STELLAR_PROOF_SECRET`
   - required if mock proof mode is enabled
+- `SAFE4_X402_FACILITATOR_URL`
+  - optional for x402 preview mode
+- `SAFE4_X402_FACILITATOR_API_KEY`
+  - optional unless your facilitator requires it
 
 ## Recommended Demo Config
 
@@ -44,6 +48,18 @@ SAFE4_STELLAR_NETWORK=stellar-testnet
 SAFE4_STELLAR_ASSET_CODE=XLM
 SAFE4_STELLAR_ASSET_ISSUER=
 SAFE4_STELLAR_DESTINATION=<FUNDED_TESTNET_RECEIVER>
+```
+
+### Optional x402 preview config
+
+```text
+SAFE4_STELLAR_VERIFICATION_MODE=x402_facilitator_preview
+SAFE4_STELLAR_NETWORK=stellar-testnet
+SAFE4_STELLAR_ASSET_CODE=XLM
+SAFE4_STELLAR_ASSET_ISSUER=
+SAFE4_STELLAR_DESTINATION=<FUNDED_TESTNET_RECEIVER>
+SAFE4_X402_FACILITATOR_URL=https://channels.openzeppelin.com/x402/testnet
+SAFE4_X402_FACILITATOR_API_KEY=<OPTIONAL_TESTNET_API_KEY>
 ```
 
 ### Reliable fallback path
@@ -62,16 +78,17 @@ After deploy:
 
 1. `GET /health`
 2. `GET /protocols/status`
-3. `GET /tools`
-4. `POST /tools/summarise` and confirm:
+3. `GET /protocols/x402/facilitator`
+4. `GET /payments/x402/guide`
+5. `GET /tools`
+6. `POST /tools/summarise` and confirm:
    - `402`
    - `PAYMENT-REQUIRED`
    - `WWW-Authenticate`
-5. complete either the mock or real testnet proof path
-6. confirm `PAYMENT-RESPONSE` on the successful retry
+7. complete either the mock or real testnet proof path
+8. confirm `PAYMENT-RESPONSE` on the successful retry
 
 ## Important Safety Note
 
 Do not deploy this toolkit over the existing Safe4 production service. It should
 run as a separate demo service or separate Railway project.
-

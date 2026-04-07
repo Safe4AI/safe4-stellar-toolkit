@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import base64
+import json
 import os
 import sys
 import unittest
@@ -127,6 +129,21 @@ class Safe4StellarToolkitTests(unittest.TestCase):
         protocols = self.client.get("/protocols/status")
         self.assertEqual(protocols.status_code, 200)
         self.assertEqual(protocols.json()["primary_demo_target"], "x402")
+
+    def test_x402_facilitator_status_reports_not_configured_by_default(self) -> None:
+        response = self.client.get("/protocols/x402/facilitator")
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        self.assertFalse(body["configured"])
+        self.assertEqual(body["supported"]["status"], "not_configured")
+
+    def test_x402_guide_reports_preview_state(self) -> None:
+        response = self.client.get("/payments/x402/guide")
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        self.assertEqual(body["status"], "preview")
+        self.assertFalse(body["facilitator"]["configured"])
+        self.assertIn("PAYMENT-SIGNATURE", body["client_retry_headers"])
 
     def test_transaction_hash_verification_authorizes_with_matching_horizon_data(self) -> None:
         payload = {
@@ -259,3 +276,63 @@ class Safe4StellarToolkitTests(unittest.TestCase):
             self.assertEqual(denied.status_code, 402)
             self.assertEqual(denied.json()["status"], "payment_invalid")
             self.assertIn("No Stellar payment operation matched", denied.json()["detail"])
+
+    def test_x402_facilitator_preview_verifies_and_settles_payment_signature(self) -> None:
+        payload = {
+            "client_id": "demo-agent",
+            "text": "Safe4 can call a facilitator to verify and settle an x402 payment payload.",
+            "max_sentences": 1,
+            "risk_flag": "low",
+        }
+        fake_payment_payload = {
+            "x402Version": 2,
+            "scheme": "exact",
+            "network": "stellar:testnet",
+            "payload": {"payer": "GREALX402PAYERXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"},
+        }
+        payment_signature = base64.urlsafe_b64encode(
+            json.dumps(fake_payment_payload, separators=(",", ":"), sort_keys=True).encode("utf-8")
+        ).decode("utf-8").rstrip("=")
+
+        verify_response = FakeHttpResponse({"isValid": True})
+        settle_response = FakeHttpResponse({"transactionHash": "stellar_x402_hash_123"})
+        supported_response = FakeHttpResponse({"networks": ["stellar:testnet"]})
+
+        with patch.dict(
+            os.environ,
+            {
+                "SAFE4_STELLAR_VERIFICATION_MODE": "x402_facilitator_preview",
+                "SAFE4_X402_FACILITATOR_URL": "https://facilitator.example/x402",
+                "SAFE4_X402_FACILITATOR_API_KEY": "demo-key",
+                "SAFE4_STELLAR_ASSET_CODE": "XLM",
+                "SAFE4_STELLAR_ASSET_ISSUER": "",
+            },
+            clear=False,
+        ):
+            client = TestClient(build_app())
+            first = client.post("/tools/summarise", json=payload)
+            self.assertEqual(first.status_code, 402)
+            challenge = first.json()
+            self.assertEqual(challenge["payment_requirement"]["verification_mode"], "x402_facilitator_preview")
+
+            with patch(
+                "packages.protocols.x402.httpx.post",
+                side_effect=[verify_response, settle_response],
+            ):
+                authorized = client.post(
+                    "/tools/summarise",
+                    json=payload,
+                    headers={
+                        "PAYMENT-SIGNATURE": payment_signature,
+                        "X-Request-Id": challenge["request_id"],
+                    },
+                )
+            self.assertEqual(authorized.status_code, 200)
+            self.assertEqual(authorized.json()["status"], "AUTHORIZED")
+            self.assertEqual(authorized.json()["receipt"]["payment_mode"], "x402_facilitator")
+            self.assertEqual(authorized.json()["payment"]["payment_reference"], "stellar_x402_hash_123")
+
+            with patch("packages.protocols.x402.httpx.get", return_value=supported_response):
+                facilitator_status = client.get("/protocols/x402/facilitator")
+            self.assertEqual(facilitator_status.status_code, 200)
+            self.assertTrue(facilitator_status.json()["configured"])

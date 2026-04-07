@@ -30,13 +30,17 @@ Implemented now:
 - `PAYMENT-SIGNATURE` preview retry header
 - `PAYMENT-RESPONSE` success header
 - request-bound payment requirement data
+- optional facilitator-aware preview seam
 - payment + policy + receipt flow in one middleware boundary
 
 Not yet implemented:
-- Stellar facilitator integration
 - auth-entry-signing client flow
-- `PAYMENT-SIGNATURE` retry format
 - production-grade x402 settlement path
+- full end-to-end wallet integration on the public demo deploy
+
+Preview visibility endpoints:
+- `GET /protocols/x402/facilitator`
+- `GET /payments/x402/guide`
 
 ### MPP Charge status
 
@@ -70,6 +74,15 @@ Not yet implemented:
 - real Stellar testnet `transaction_hash` mode
 
 This is the strongest currently implemented proof path in the repo.
+
+### Optional x402 preview path
+
+- `x402_facilitator_preview`
+
+Use this when you have:
+- an x402-capable wallet or client that can produce `PAYMENT-SIGNATURE`
+- a configured facilitator URL
+- optionally an API key for facilitator-backed verify and settle
 
 ### Reliable fallback
 

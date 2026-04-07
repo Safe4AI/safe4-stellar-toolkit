@@ -34,6 +34,7 @@ policy, and returns a receipt-backed tool response.
 - mock settlement flow for fast demos
 - real transaction-hash verification against Stellar Horizon data
 - preview x402 wire/header surface
+- optional facilitator-aware x402 preview seam
 - client-side testnet helper scripts to create/fund accounts and execute the real demo flow
 - thin Stellar adapter with request-bound payment requirements
 - validated locally against a real Stellar testnet XLM payment path
@@ -64,6 +65,7 @@ The x402 preview currently includes:
 - `PAYMENT-REQUIRED`
 - `PAYMENT-SIGNATURE`
 - `PAYMENT-RESPONSE`
+- facilitator status and guide endpoints for judge inspection
 
 ## Evidence
 

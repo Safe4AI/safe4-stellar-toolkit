@@ -8,7 +8,7 @@ required, policy is enforced, and receipts are returned.
 Recommended protocol framing for the demo:
 
 - primary live proof path: real Stellar testnet `transaction_hash`
-- x402: preview header surface shown in responses
+- x402: preview header surface plus optional facilitator status endpoints
 - MPP: mention as planned next protocol path, not implemented
 
 Preview x402 retry note:
@@ -16,6 +16,8 @@ Preview x402 retry note:
 - the server currently accepts both:
   - `Authorization: Payment <token>`
   - `PAYMENT-SIGNATURE: <token>`
+- preview guide endpoint:
+  - `GET /payments/x402/guide`
 
 ## Start The API
 
@@ -91,6 +93,18 @@ This script will:
 2. submit the matching Stellar testnet payment
 3. exchange the tx hash for a payment token
 4. retry the tool call and print the authorized result
+
+### 2C. Optional x402 facilitator preview
+
+If `SAFE4_STELLAR_VERIFICATION_MODE=x402_facilitator_preview`, inspect:
+
+```powershell
+curl http://127.0.0.1:8080/protocols/x402/facilitator
+curl http://127.0.0.1:8080/payments/x402/guide
+```
+
+This is the judge-friendly way to show that the repo already has a facilitator-aware
+x402 seam without overclaiming complete wallet integration.
 
 ### 3. Retry the same tool with payment proof
 

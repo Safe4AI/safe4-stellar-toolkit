@@ -5,6 +5,7 @@
 - a thin Stellar-specific payment requirement format
 - mock settlement for reliable hackathon demos
 - a real transaction-hash verification path for testnet use
+- an optional facilitator-aware x402 preview seam
 - a small repo focused only on paid AI tool middleware
 
 ## Real vs Mocked
@@ -30,6 +31,12 @@
 
 - the default demo settlement path is mock by design
 - the mock flow produces a signed payment token rather than submitting an onchain payment
+
+### Preview x402 Layer
+
+- the repo can now expose facilitator-aware x402 payment requirements and status endpoints
+- it does not yet claim a full auth-entry-signing wallet flow
+- this keeps the public submission honest while still showing protocol direction
 
 ## Why This Tradeoff
 

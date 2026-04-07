@@ -23,6 +23,7 @@ from packages.policies.engine import PolicyConfig, PolicyEngine
 from packages.protocols.x402 import (
     build_x402_required_header,
     build_x402_response_header,
+    build_x402_settlement_header,
     protocol_status,
 )
 from packages.stellar.adapter import StellarConfig, StellarPaymentAdapter
@@ -60,6 +61,8 @@ def build_app() -> FastAPI:
             ).strip(),
             horizon_url=os.getenv("SAFE4_STELLAR_HORIZON_URL", "https://horizon-testnet.stellar.org").strip(),
             proof_secret=os.getenv("SAFE4_STELLAR_PROOF_SECRET", "change-me").strip() or "change-me",
+            x402_facilitator_url=os.getenv("SAFE4_X402_FACILITATOR_URL"),
+            x402_facilitator_api_key=os.getenv("SAFE4_X402_FACILITATOR_API_KEY"),
         )
     )
     policy_engine = PolicyEngine(
@@ -104,11 +107,12 @@ def build_app() -> FastAPI:
     ) -> JSONResponse:
         token = _payment_token_from_headers(authorization, payment_signature)
         if not token:
-            settle_path = (
-                "/payments/mock/settle"
-                if stellar_adapter.config.verification_mode == "mock"
-                else "/payments/transaction-hash-proof"
-            )
+            if stellar_adapter.config.verification_mode == "mock":
+                settle_path = "/payments/mock/settle"
+            elif stellar_adapter.config.verification_mode == "x402_facilitator_preview":
+                settle_path = "/payments/x402/guide"
+            else:
+                settle_path = "/payments/transaction-hash-proof"
             pending = firewall.ensure_payment(
                 tool_name=tool_name,
                 amount=amount,
@@ -116,6 +120,8 @@ def build_app() -> FastAPI:
                 risk_flag=risk_flag,
                 payload=payload,
                 settle_endpoint=str(request.base_url).rstrip("/") + settle_path,
+                resource_url=str(request.url),
+                description=f"Access to {tool_name}",
             )
             return firewall.payment_required_response(pending)
         request_id = request_id_header or ""
@@ -146,13 +152,18 @@ def build_app() -> FastAPI:
                 status_code=402,
                 content={"status": "payment_invalid", "request_id": request_id, "detail": str(exc)},
             )
+        headers = {
+            "PAYMENT-RESPONSE": build_x402_response_header(response=response),
+            "X-Payment-Protocol": "x402-stellar-preview",
+        }
+        if response.receipt.payment_mode == "x402_facilitator":
+            proof_settlement = response.payment.get("settlement_response") if isinstance(response.payment, dict) else None
+            if isinstance(proof_settlement, dict):
+                headers["PAYMENT-RESPONSE"] = build_x402_settlement_header(settlement_response=proof_settlement)
         return JSONResponse(
             status_code=200,
             content=response.model_dump(mode="json"),
-            headers={
-                "PAYMENT-RESPONSE": build_x402_response_header(response=response),
-                "X-Payment-Protocol": "x402-stellar-preview",
-            },
+            headers=headers,
         )
 
     @app.get("/")
@@ -171,6 +182,7 @@ def build_app() -> FastAPI:
             "verification_mode": stellar_adapter.config.verification_mode,
             "network": stellar_adapter.config.network,
             "asset_code": stellar_adapter.config.asset_code,
+            "x402_facilitator_configured": stellar_adapter.facilitator.configured,
         }
 
     @app.get("/demo")
@@ -204,7 +216,48 @@ def build_app() -> FastAPI:
 
     @app.get("/protocols/status")
     def get_protocol_status() -> dict[str, Any]:
-        return protocol_status(verification_mode=stellar_adapter.config.verification_mode)
+        status = protocol_status(verification_mode=stellar_adapter.config.verification_mode)
+        status["x402"]["facilitator_configured"] = stellar_adapter.facilitator.configured
+        if stellar_adapter.facilitator.configured:
+            status["x402"]["facilitator_url"] = stellar_adapter.facilitator.url
+        return status
+
+    @app.get("/protocols/x402/facilitator")
+    def get_x402_facilitator_status() -> dict[str, Any]:
+        try:
+            supported = stellar_adapter.facilitator_supported()
+        except Exception as exc:
+            supported = {
+                "configured": stellar_adapter.facilitator.configured,
+                "status": "unreachable",
+                "error": str(exc),
+            }
+        return {
+            "configured": stellar_adapter.facilitator.configured,
+            "api_key_configured": stellar_adapter.facilitator.api_key_configured,
+            "verification_mode": stellar_adapter.config.verification_mode,
+            "facilitator_url": stellar_adapter.facilitator.url if stellar_adapter.facilitator.configured else None,
+            "supported": supported,
+        }
+
+    @app.get("/payments/x402/guide")
+    def x402_guide() -> dict[str, Any]:
+        return {
+            "status": "preview",
+            "verification_mode": stellar_adapter.config.verification_mode,
+            "network": stellar_adapter.config.network,
+            "client_retry_headers": ["PAYMENT-SIGNATURE", "X-Request-Id"],
+            "facilitator": {
+                "configured": stellar_adapter.facilitator.configured,
+                "api_key_configured": stellar_adapter.facilitator.api_key_configured,
+                "url": stellar_adapter.facilitator.url if stellar_adapter.facilitator.configured else None,
+            },
+            "notes": [
+                "This preview expects a client or wallet that can produce an x402 PAYMENT-SIGNATURE payload.",
+                "For live Stellar x402, use an auth-entry-signing wallet and a facilitator such as the OpenZeppelin or Coinbase-compatible x402 endpoints.",
+                "The current strongest proof path in this repo remains transaction_hash mode unless a facilitator is configured.",
+            ],
+        }
 
     @app.get("/audit/entries")
     def list_audit_entries() -> dict[str, Any]:

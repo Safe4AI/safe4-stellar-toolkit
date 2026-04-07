@@ -12,6 +12,7 @@ from typing import Any
 import httpx
 
 from packages.middleware.models import PaymentProof, PaymentRequirement
+from packages.protocols.x402 import X402FacilitatorClient, build_x402_payment_requirements
 
 
 def _base64url_encode(raw: bytes) -> str:
@@ -32,6 +33,8 @@ class StellarConfig:
     destination: str
     horizon_url: str
     proof_secret: str
+    x402_facilitator_url: str | None = None
+    x402_facilitator_api_key: str | None = None
 
 
 class StellarPaymentAdapter:
@@ -39,8 +42,20 @@ class StellarPaymentAdapter:
 
     def __init__(self, config: StellarConfig) -> None:
         self.config = config
+        self.facilitator = X402FacilitatorClient(
+            url=config.x402_facilitator_url,
+            api_key=config.x402_facilitator_api_key,
+        )
 
-    def build_requirement(self, *, request_id: str, amount: str, settle_endpoint: str) -> PaymentRequirement:
+    def build_requirement(
+        self,
+        *,
+        request_id: str,
+        amount: str,
+        settle_endpoint: str,
+        resource_url: str | None = None,
+        description: str | None = None,
+    ) -> PaymentRequirement:
         memo = f"safe4-{request_id[:12]}"
         return PaymentRequirement(
             request_id=request_id,
@@ -53,6 +68,8 @@ class StellarPaymentAdapter:
             expires_at=datetime.now(timezone.utc) + timedelta(minutes=5),
             verification_mode=self.config.verification_mode,
             settle_endpoint=settle_endpoint,
+            resource_url=resource_url,
+            description=description,
         )
 
     def build_mock_payment_token(self, *, requirement: PaymentRequirement, payer: str) -> str:
@@ -110,6 +127,8 @@ class StellarPaymentAdapter:
         return proof
 
     def verify(self, *, requirement: PaymentRequirement, token: str) -> PaymentProof:
+        if self.config.verification_mode == "x402_facilitator_preview":
+            return self._verify_x402_facilitator(requirement=requirement, payment_signature=token)
         proof = self.parse_payment_token(token)
         if proof.request_id != requirement.request_id:
             raise ValueError("Payment proof request binding mismatch.")
@@ -150,6 +169,49 @@ class StellarPaymentAdapter:
             return proof
         raise ValueError("No Stellar payment operation matched the Safe4 request requirements.")
         return proof
+
+    def facilitator_supported(self) -> dict[str, Any]:
+        return self.facilitator.supported()
+
+    def _verify_x402_facilitator(self, *, requirement: PaymentRequirement, payment_signature: str) -> PaymentProof:
+        if not self.facilitator.configured:
+            raise ValueError("x402 facilitator mode is configured, but no facilitator URL is set.")
+        try:
+            payment_payload = json.loads(_base64url_decode(payment_signature).decode("utf-8"))
+        except Exception as exc:
+            raise ValueError("PAYMENT-SIGNATURE must be a base64-encoded JSON x402 payment payload.") from exc
+        if not isinstance(payment_payload, dict):
+            raise ValueError("PAYMENT-SIGNATURE payload must decode to a JSON object.")
+
+        payment_requirements_bundle = build_x402_payment_requirements(requirement=requirement)
+        accepts = payment_requirements_bundle.get("accepts") or []
+        if not accepts:
+            raise ValueError("No x402 payment requirements are available for this request.")
+        payment_requirements = accepts[0]
+
+        try:
+            self.facilitator.verify(
+                payment_payload=payment_payload,
+                payment_requirements=payment_requirements,
+            )
+            settlement_response = self.facilitator.settle(
+                payment_payload=payment_payload,
+                payment_requirements=payment_requirements,
+            )
+        except httpx.HTTPError as exc:
+            raise ValueError(f"x402 facilitator request failed: {exc}") from exc
+
+        payer = self._extract_x402_payer(payment_payload)
+        payment_reference = self._extract_x402_payment_reference(settlement_response, payment_payload)
+        return PaymentProof(
+            mode="x402_facilitator",
+            request_id=requirement.request_id,
+            payer=payer,
+            payment_reference=payment_reference,
+            memo=requirement.memo,
+            raw_payload=payment_payload,
+            settlement_response=settlement_response if isinstance(settlement_response, dict) else {"raw": settlement_response},
+        )
 
     def _horizon_get_json(self, path: str) -> dict[str, Any]:
         response = httpx.get(f"{self.config.horizon_url.rstrip('/')}{path}", timeout=10.0)
@@ -216,3 +278,29 @@ class StellarPaymentAdapter:
             str(operation.get("asset_code") or "").upper() == required_code
             and str(operation.get("asset_issuer") or "") == requirement.asset_issuer
         )
+
+    @staticmethod
+    def _extract_x402_payer(payment_payload: dict[str, Any]) -> str:
+        payload = payment_payload.get("payload")
+        if isinstance(payload, dict):
+            for key in ("payer", "from", "source", "address", "publicKey", "sender"):
+                value = payload.get(key)
+                if isinstance(value, str) and value.strip():
+                    return value.strip()
+        for key in ("payer", "from", "address", "sender"):
+            value = payment_payload.get(key)
+            if isinstance(value, str) and value.strip():
+                return value.strip()
+        return "x402-client"
+
+    @staticmethod
+    def _extract_x402_payment_reference(settlement_response: Any, payment_payload: dict[str, Any]) -> str:
+        if isinstance(settlement_response, dict):
+            for key in ("transactionHash", "txHash", "paymentReference", "reference", "hash", "id"):
+                value = settlement_response.get(key)
+                if isinstance(value, str) and value.strip():
+                    return value.strip()
+        digest = hashlib.sha256(
+            json.dumps(payment_payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
+        ).hexdigest()
+        return f"x402_{digest[:16]}"
