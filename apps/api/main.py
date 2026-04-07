@@ -20,6 +20,7 @@ from packages.middleware.models import (
     TransactionHashProofRequest,
 )
 from packages.policies.engine import PolicyConfig, PolicyEngine
+from packages.protocols.mpp import build_mpp_charge_guide
 from packages.protocols.x402 import (
     build_x402_required_header,
     build_x402_response_header,
@@ -109,6 +110,8 @@ def build_app() -> FastAPI:
         if not token:
             if stellar_adapter.config.verification_mode == "mock":
                 settle_path = "/payments/mock/settle"
+            elif stellar_adapter.config.verification_mode == "mpp_charge_preview":
+                settle_path = "/payments/mpp/charge/guide"
             elif stellar_adapter.config.verification_mode == "x402_facilitator_preview":
                 settle_path = "/payments/x402/guide"
             else:
@@ -258,6 +261,38 @@ def build_app() -> FastAPI:
                 "The current strongest live proof path in this deployment remains transaction_hash mode unless x402_facilitator_preview is enabled.",
             ],
         }
+
+    @app.get("/protocols/mpp/charge")
+    def get_mpp_charge_status() -> dict[str, Any]:
+        return {
+            "status": "preview",
+            "verification_mode": stellar_adapter.config.verification_mode,
+            "sdk": "@stellar/mpp",
+            "supported_modes": ["pull", "push", "sponsored-fee-preview"],
+            "notes": [
+                "MPP Charge is exposed here as a preview protocol surface.",
+                "The toolkit does not yet run a full @stellar/mpp verification backend in Python.",
+                "Use transaction_hash mode for the strongest live demo proof today.",
+            ],
+        }
+
+    @app.get("/protocols/mpp/session")
+    def get_mpp_session_status() -> dict[str, Any]:
+        return {
+            "status": "planned",
+            "notes": [
+                "MPP Session is intentionally deferred.",
+                "The next protocol milestone after x402 is MPP Charge, not payment channels.",
+            ],
+        }
+
+    @app.get("/payments/mpp/charge/guide")
+    def mpp_charge_guide(request_id: str | None = None) -> dict[str, Any]:
+        pending = firewall.get_pending(request_id) if request_id else None
+        requirement = pending.requirement if pending is not None else None
+        body = build_mpp_charge_guide(requirement=requirement)
+        body["verification_mode"] = stellar_adapter.config.verification_mode
+        return body
 
     @app.get("/audit/entries")
     def list_audit_entries() -> dict[str, Any]:

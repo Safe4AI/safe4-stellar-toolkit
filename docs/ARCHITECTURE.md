@@ -10,6 +10,8 @@
   - Stellar payment requirement generation and proof verification
 - `packages/protocols/x402.py`
   - preview x402 header generation and optional facilitator client
+- `packages/protocols/mpp.py`
+  - preview MPP Charge request and guide generation
 - `packages/policies/engine.py`
   - explicit policy checks and rate limiting
 
@@ -37,7 +39,8 @@
 - policy is intentionally small and visible
 - x402 support is currently a preview wire surface, not a full facilitator integration
 - the repo now includes an optional facilitator-aware x402 preview seam, but not a complete wallet flow
-- MPP is not implemented yet
+- the repo now includes an MPP Charge preview surface, but not a live `@stellar/mpp` server path
+- MPP Session is not implemented yet
 
 ## What Makes The Demo Easy To Evaluate
 

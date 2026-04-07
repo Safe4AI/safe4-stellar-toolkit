@@ -62,6 +62,16 @@ SAFE4_X402_FACILITATOR_URL=https://channels.openzeppelin.com/x402/testnet
 SAFE4_X402_FACILITATOR_API_KEY=<OPTIONAL_TESTNET_API_KEY>
 ```
 
+### Optional MPP Charge preview config
+
+```text
+SAFE4_STELLAR_VERIFICATION_MODE=mpp_charge_preview
+SAFE4_STELLAR_NETWORK=stellar-testnet
+SAFE4_STELLAR_ASSET_CODE=XLM
+SAFE4_STELLAR_ASSET_ISSUER=
+SAFE4_STELLAR_DESTINATION=<FUNDED_TESTNET_RECEIVER>
+```
+
 ### Reliable fallback path
 
 ```text
@@ -83,13 +93,15 @@ After deploy:
 2. `GET /protocols/status`
 3. `GET /protocols/x402/facilitator`
 4. `GET /payments/x402/guide`
-5. `GET /tools`
-6. `POST /tools/summarise` and confirm:
+5. `GET /protocols/mpp/charge`
+6. `GET /payments/mpp/charge/guide`
+7. `GET /tools`
+8. `POST /tools/summarise` and confirm:
    - `402`
-   - `PAYMENT-REQUIRED`
+   - either `PAYMENT-REQUIRED` or `MPP-CHARGE-REQUIRED`, depending on verification mode
    - `WWW-Authenticate`
-7. complete either the mock or real testnet proof path
-8. confirm `PAYMENT-RESPONSE` on the successful retry
+9. complete either the mock or real testnet proof path
+10. confirm `PAYMENT-RESPONSE` on the successful retry
 
 ## Important Safety Note
 

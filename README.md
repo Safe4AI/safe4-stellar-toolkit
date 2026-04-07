@@ -36,6 +36,7 @@ receipts.
   - `PAYMENT-SIGNATURE`
   - `PAYMENT-RESPONSE`
 - optional facilitator-aware x402 preview seam
+- MPP Charge preview guide and challenge framing
 - visible policy controls:
   - max spend per request
   - deny on high risk flag
@@ -102,6 +103,16 @@ In that mode, inspect:
 - `GET /protocols/x402/facilitator`
 - `GET /payments/x402/guide`
 
+Optional MPP Charge preview configuration:
+
+```powershell
+SAFE4_STELLAR_VERIFICATION_MODE=mpp_charge_preview
+```
+
+In that mode, inspect:
+- `GET /protocols/mpp/charge`
+- `GET /payments/mpp/charge/guide`
+
 Run:
 
 ```powershell
@@ -156,9 +167,12 @@ python scripts/run_testnet_payment_demo.py --source-secret <STELLAR_SECRET>
 - `GET /tools`
 - `GET /protocols/status`
 - `GET /protocols/x402/facilitator`
+- `GET /protocols/mpp/charge`
+- `GET /protocols/mpp/session`
 - `POST /payments/mock/settle`
 - `POST /payments/transaction-hash-proof`
 - `GET /payments/x402/guide`
+- `GET /payments/mpp/charge/guide`
 - `POST /tools/summarise`
 - `POST /tools/fetch-url`
 - `POST /tools/risk-check`
@@ -195,7 +209,7 @@ The verifier checks:
 - current x402 status:
   - preview wire/header surface with optional facilitator seam
 - current MPP status:
-  - planned
+  - MPP Charge preview plus MPP Session planned
 
 This repo does not yet claim complete Stellar x402 or MPP support. It exposes a
 clear middleware boundary today and is being extended toward those protocols.

@@ -35,6 +35,7 @@ policy, and returns a receipt-backed tool response.
 - real transaction-hash verification against Stellar Horizon data
 - preview x402 wire/header surface
 - optional facilitator-aware x402 preview seam
+- MPP Charge preview guide and challenge surface
 - client-side testnet helper scripts to create/fund accounts and execute the real demo flow
 - thin Stellar adapter with request-bound payment requirements
 - validated locally against a real Stellar testnet XLM payment path
@@ -62,7 +63,8 @@ not allow mock settlement as a silent fallback.
 Protocol status:
 - real proof path today: `transaction_hash`
 - x402: `preview`
-- MPP: `planned`
+- MPP Charge: `preview`
+- MPP Session: `planned`
 
 The x402 preview currently includes:
 - `PAYMENT-REQUIRED`

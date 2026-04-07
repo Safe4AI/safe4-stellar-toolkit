@@ -145,6 +145,21 @@ class Safe4StellarToolkitTests(unittest.TestCase):
         self.assertFalse(body["facilitator"]["configured"])
         self.assertIn("PAYMENT-SIGNATURE", body["client_retry_headers"])
 
+    def test_mpp_charge_and_session_endpoints_exist(self) -> None:
+        charge = self.client.get("/protocols/mpp/charge")
+        self.assertEqual(charge.status_code, 200)
+        self.assertEqual(charge.json()["status"], "preview")
+        self.assertEqual(charge.json()["sdk"], "@stellar/mpp")
+
+        session = self.client.get("/protocols/mpp/session")
+        self.assertEqual(session.status_code, 200)
+        self.assertEqual(session.json()["status"], "planned")
+
+        guide = self.client.get("/payments/mpp/charge/guide")
+        self.assertEqual(guide.status_code, 200)
+        self.assertEqual(guide.json()["status"], "preview")
+        self.assertEqual(guide.json()["protocol"], "mpp-charge-preview")
+
     def test_transaction_hash_verification_authorizes_with_matching_horizon_data(self) -> None:
         payload = {
             "client_id": "demo-agent",
@@ -364,3 +379,40 @@ class Safe4StellarToolkitTests(unittest.TestCase):
                 facilitator_status = client.get("/protocols/x402/facilitator")
             self.assertEqual(facilitator_status.status_code, 200)
             self.assertTrue(facilitator_status.json()["configured"])
+
+    def test_mpp_charge_preview_changes_challenge_framing(self) -> None:
+        payload = {
+            "client_id": "demo-agent",
+            "text": "Safe4 should expose an MPP Charge preview challenge without overclaiming settlement.",
+            "max_sentences": 1,
+            "risk_flag": "low",
+        }
+        with patch.dict(
+            os.environ,
+            {
+                "SAFE4_STELLAR_VERIFICATION_MODE": "mpp_charge_preview",
+                "SAFE4_STELLAR_ASSET_CODE": "XLM",
+                "SAFE4_STELLAR_ASSET_ISSUER": "",
+            },
+            clear=False,
+        ):
+            client = TestClient(build_app())
+            first = client.post("/tools/summarise", json=payload)
+            self.assertEqual(first.status_code, 402)
+            self.assertEqual(first.headers["X-Payment-Protocol"], "mpp-charge-preview")
+            self.assertIn("MPP-CHARGE-REQUIRED", first.headers)
+            self.assertNotIn("PAYMENT-REQUIRED", first.headers)
+            challenge = first.json()
+            self.assertEqual(challenge["payment_requirement"]["verification_mode"], "mpp_charge_preview")
+            self.assertTrue(challenge["payment_requirement"]["settle_endpoint"].endswith("/payments/mpp/charge/guide"))
+
+            guide = client.get(f"/payments/mpp/charge/guide?request_id={challenge['request_id']}")
+            self.assertEqual(guide.status_code, 200)
+            guide_body = guide.json()
+            self.assertEqual(guide_body["protocol"], "mpp-charge-preview")
+            self.assertEqual(guide_body["request"]["charge"]["memo"], challenge["payment_requirement"]["memo"])
+
+            protocols = client.get("/protocols/status")
+            self.assertEqual(protocols.status_code, 200)
+            self.assertEqual(protocols.json()["mpp_charge"]["status"], "preview")
+            self.assertEqual(protocols.json()["primary_demo_target"], "mpp_charge")

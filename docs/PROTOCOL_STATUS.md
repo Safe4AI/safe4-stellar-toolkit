@@ -45,11 +45,14 @@ Preview visibility endpoints:
 ### MPP Charge status
 
 Status:
-- `planned`
+- `preview`
 
 Implemented now:
 - the repo already uses a payment-auth shaped request/retry model
 - the current request binding and receipt model is compatible with a later MPP path
+- `GET /protocols/mpp/charge`
+- `GET /payments/mpp/charge/guide`
+- `mpp_charge_preview` challenge framing
 
 Not yet implemented:
 - `@stellar/mpp` charge flow
@@ -83,6 +86,15 @@ Use this when you have:
 - an x402-capable wallet or client that can produce `PAYMENT-SIGNATURE`
 - a configured facilitator URL
 - optionally an API key for facilitator-backed verify and settle
+
+### Optional MPP Charge preview path
+
+- `mpp_charge_preview`
+
+Use this when you want to show:
+- Safe4 can frame a one-time MPP charge challenge
+- request-bound payment metadata for a future `@stellar/mpp` flow
+- a clean path toward pull, push, and sponsored-fee support without claiming it is done
 
 ### Reliable fallback
 

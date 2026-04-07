@@ -97,7 +97,7 @@ def protocol_status(*, verification_mode: str) -> dict[str, Any]:
     if verification_mode == "x402_facilitator_preview":
         x402_status["implemented"].append("facilitator verify and settle preview seam")
     mpp_charge_status = {
-        "status": "planned",
+        "status": "preview" if verification_mode == "mpp_charge_preview" else "planned",
         "implemented": [
             "payment auth style retry model",
             "request-bound challenge and receipt model",
@@ -109,6 +109,8 @@ def protocol_status(*, verification_mode: str) -> dict[str, Any]:
             "sponsored-fee flow",
         ],
     }
+    if verification_mode == "mpp_charge_preview":
+        mpp_charge_status["implemented"].append("mpp charge guide and preview challenge surface")
     mpp_session_status = {
         "status": "planned",
         "implemented": [],
@@ -119,7 +121,7 @@ def protocol_status(*, verification_mode: str) -> dict[str, Any]:
         ],
     }
     return {
-        "primary_demo_target": "x402",
+        "primary_demo_target": "mpp_charge" if verification_mode == "mpp_charge_preview" else "x402",
         "fallback_demo_target": verification_mode,
         "x402": x402_status,
         "mpp_charge": mpp_charge_status,

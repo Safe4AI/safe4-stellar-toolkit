@@ -14,6 +14,7 @@ from fastapi.responses import JSONResponse
 from packages.middleware.audit import AuditLog
 from packages.middleware.models import PaymentRequirement, ReceiptRecord, ToolExecutionResponse
 from packages.policies.engine import PolicyEngine
+from packages.protocols.mpp import build_mpp_charge_required_header
 from packages.protocols.x402 import build_x402_required_header
 from packages.stellar.adapter import StellarPaymentAdapter
 
@@ -152,6 +153,7 @@ class FirewallService:
             "tool": pending.tool_name,
             "payment_requirement": pending.requirement.model_dump(mode="json"),
         }
+        verification_mode = pending.requirement.verification_mode
         header_value = (
             'Payment realm="safe4-stellar", '
             f'request_id="{pending.request_id}", '
@@ -161,13 +163,18 @@ class FirewallService:
             f'destination="{pending.requirement.destination}", '
             f'memo="{pending.requirement.memo}"'
         )
+        headers = {
+            "WWW-Authenticate": header_value,
+            "X-Request-Id": pending.request_id,
+        }
+        if verification_mode == "mpp_charge_preview":
+            headers["MPP-CHARGE-REQUIRED"] = build_mpp_charge_required_header(requirement=pending.requirement)
+            headers["X-Payment-Protocol"] = "mpp-charge-preview"
+        else:
+            headers["PAYMENT-REQUIRED"] = build_x402_required_header(requirement=pending.requirement)
+            headers["X-Payment-Protocol"] = "x402-stellar-preview"
         return JSONResponse(
             status_code=402,
             content=body,
-            headers={
-                "WWW-Authenticate": header_value,
-                "PAYMENT-REQUIRED": build_x402_required_header(requirement=pending.requirement),
-                "X-Payment-Protocol": "x402-stellar-preview",
-                "X-Request-Id": pending.request_id,
-            },
+            headers=headers,
         )

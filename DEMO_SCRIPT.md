@@ -9,7 +9,8 @@ Recommended protocol framing for the demo:
 
 - primary live proof path: real Stellar testnet `transaction_hash`
 - x402: preview header surface plus optional facilitator status endpoints
-- MPP: mention as planned next protocol path, not implemented
+- MPP Charge: preview guide and challenge surface
+- MPP Session: planned, not implemented
 
 Preview x402 retry note:
 
@@ -105,6 +106,19 @@ curl http://127.0.0.1:8080/payments/x402/guide
 
 This is the judge-friendly way to show that the repo already has a facilitator-aware
 x402 seam without overclaiming complete wallet integration.
+
+### 2D. Optional MPP Charge preview
+
+If `SAFE4_STELLAR_VERIFICATION_MODE=mpp_charge_preview`, inspect:
+
+```powershell
+curl http://127.0.0.1:8080/protocols/mpp/charge
+curl http://127.0.0.1:8080/payments/mpp/charge/guide
+```
+
+Then request a paid tool and show that the `402` response now carries:
+- `X-Payment-Protocol: mpp-charge-preview`
+- `MPP-CHARGE-REQUIRED`
 
 ### 3. Retry the same tool with payment proof
 

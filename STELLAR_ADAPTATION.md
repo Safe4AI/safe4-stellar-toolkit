@@ -6,6 +6,7 @@
 - mock settlement for reliable hackathon demos
 - a real transaction-hash verification path for testnet use
 - an optional facilitator-aware x402 preview seam
+- an optional MPP Charge preview seam
 - a small repo focused only on paid AI tool middleware
 
 ## Real vs Mocked
@@ -37,6 +38,12 @@
 - the repo can now expose facilitator-aware x402 payment requirements and status endpoints
 - it does not yet claim a full auth-entry-signing wallet flow
 - this keeps the public submission honest while still showing protocol direction
+
+### Preview MPP Charge Layer
+
+- the repo can now expose an MPP Charge guide and preview challenge framing
+- it does not yet claim a live `@stellar/mpp` verification backend
+- this keeps MPP visible in the submission without overstating what is shipped
 
 ## Why This Tradeoff
 
