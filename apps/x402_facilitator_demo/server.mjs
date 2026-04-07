@@ -1,7 +1,7 @@
 import express from "express";
 import { createHash } from "node:crypto";
 
-const PORT = Number.parseInt(process.env.X402_FACILITATOR_PORT || "3200", 10);
+const PORT = Number.parseInt(process.env.PORT || process.env.X402_FACILITATOR_PORT || "3200", 10);
 const NETWORK = (process.env.X402_FACILITATOR_NETWORK || "stellar:testnet").trim();
 const REQUIRE_BEARER = (process.env.X402_FACILITATOR_API_KEY || "").trim();
 
@@ -33,6 +33,23 @@ app.use((req, res, next) => {
     });
   }
   return next();
+});
+
+app.get("/", (_req, res) => {
+  res.json({
+    name: "safe4-x402-facilitator-demo",
+    status: "ok",
+    network: NETWORK,
+    endpoints: ["/supported", "/verify", "/settle"],
+  });
+});
+
+app.get("/health", (_req, res) => {
+  res.json({
+    status: "ok",
+    network: NETWORK,
+    bearer_required: Boolean(REQUIRE_BEARER),
+  });
 });
 
 app.get("/supported", (_req, res) => {

@@ -1,7 +1,7 @@
 # x402 Facilitator Demo
 
-This repo now contains a local x402 facilitator demo server that matches the
-toolkit’s expected endpoint shape:
+This repo contains a small x402 facilitator demo server that matches the
+toolkit's expected endpoint shape:
 
 - `GET /supported`
 - `POST /verify`
@@ -9,17 +9,20 @@ toolkit’s expected endpoint shape:
 
 Files:
 - `apps/x402_facilitator_demo/server.mjs`
+- `apps/x402_facilitator_demo/package.json`
+- `apps/x402_facilitator_demo/Dockerfile`
 - `.env.x402.example`
 - `scripts/run_x402_facilitator_demo.py`
 
 ## What It Is
 
-This is a local compatibility sidecar for the hackathon demo.
+This is a controlled compatibility sidecar for the hackathon demo.
 
-It is not presented as the OpenZeppelin Relayer plugin itself. It exists to make
-the `x402_facilitator_preview` path runnable under our control.
+It is not presented as the OpenZeppelin Relayer plugin itself. It exists to
+make the `x402_facilitator_preview` path runnable under our control, while
+keeping the public toolkit app honest about what is preview-only.
 
-## Quickstart
+## Local Quickstart
 
 Copy:
 
@@ -47,10 +50,18 @@ Run the demo:
 python scripts/run_x402_facilitator_demo.py
 ```
 
+## Public Sidecar
+
+The same sidecar is also deployable as a standalone service:
+
+- `https://x402-facilitator-demo-production.up.railway.app/health`
+- `https://x402-facilitator-demo-production.up.railway.app/supported`
+
 ## Why It Exists
 
-This gives the submission a real end-to-end x402 preview path today, while still
-leaving room for:
+This gives the submission a real end-to-end x402 preview path today, while
+still leaving room for:
+
 - hosted OpenZeppelin Channels
 - self-hosted OpenZeppelin Relayer plugin
 
@@ -60,11 +71,22 @@ demo implementation.
 ## Verified Locally
 
 The local demo path has been exercised successfully with:
+
 - local facilitator sidecar on `http://127.0.0.1:3200`
 - toolkit API on `http://127.0.0.1:8091`
 - `SAFE4_STELLAR_VERIFICATION_MODE=x402_facilitator_preview`
 
 Observed result:
+
 - `402` challenge returned
 - facilitator-backed retry returned `AUTHORIZED`
 - receipt `payment_mode` was `x402_facilitator`
+
+## Public Inspection Path
+
+The public toolkit deploy still uses `transaction_hash` as its primary proof
+mode, but its x402 inspection endpoints now resolve against the public
+facilitator sidecar:
+
+- `https://toolkit-api-production-a04c.up.railway.app/protocols/x402/facilitator`
+- `https://toolkit-api-production-a04c.up.railway.app/payments/x402/guide`

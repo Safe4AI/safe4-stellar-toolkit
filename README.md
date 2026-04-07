@@ -36,6 +36,7 @@ receipts.
   - `PAYMENT-SIGNATURE`
   - `PAYMENT-RESPONSE`
 - optional facilitator-aware x402 preview seam
+- public x402 facilitator demo sidecar under our control
 - MPP Charge preview guide and challenge framing
 - Node sidecar demo for real `@stellar/mpp` Charge flows
 - visible policy controls:
@@ -61,6 +62,10 @@ Protocol status:
 - real Stellar testnet XLM payment flow exercised successfully
 - verified transaction hash:
   - `ef0bcfd7c46f1f47d7c3769f60a0a9b12886bb96a67ef6b51f994acb4d2c3b83`
+- live x402 facilitator inspection path:
+  - `https://toolkit-api-production-a04c.up.railway.app/protocols/x402/facilitator`
+- live x402 facilitator sidecar:
+  - `https://x402-facilitator-demo-production.up.railway.app`
 - verification notes:
   - [`docs/TESTNET_VERIFICATION.md`](docs/TESTNET_VERIFICATION.md)
 
@@ -108,6 +113,10 @@ Facilitator deployment reference:
 - [`docs/X402_FACILITATOR_SETUP.md`](docs/X402_FACILITATOR_SETUP.md)
 - [`docs/X402_RELAYER_DEMO.md`](docs/X402_RELAYER_DEMO.md)
 - [`docs/X402_FACILITATOR_DEMO.md`](docs/X402_FACILITATOR_DEMO.md)
+
+Live public facilitator demo:
+- `https://x402-facilitator-demo-production.up.railway.app/health`
+- `https://x402-facilitator-demo-production.up.railway.app/supported`
 
 Optional MPP Charge preview configuration:
 

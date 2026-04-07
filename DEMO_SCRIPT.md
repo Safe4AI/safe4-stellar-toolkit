@@ -107,6 +107,12 @@ curl http://127.0.0.1:8080/payments/x402/guide
 This is the judge-friendly way to show that the repo already has a facilitator-aware
 x402 seam without overclaiming complete wallet integration.
 
+Public inspection URLs:
+- `https://toolkit-api-production-a04c.up.railway.app/protocols/x402/facilitator`
+- `https://toolkit-api-production-a04c.up.railway.app/payments/x402/guide`
+- `https://x402-facilitator-demo-production.up.railway.app/health`
+- `https://x402-facilitator-demo-production.up.railway.app/supported`
+
 If you want to point reviewers at a concrete self-hosted path, use:
 - [`docs/X402_FACILITATOR_SETUP.md`](docs/X402_FACILITATOR_SETUP.md)
 - [`docs/X402_RELAYER_DEMO.md`](docs/X402_RELAYER_DEMO.md)

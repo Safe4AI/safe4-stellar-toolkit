@@ -1,0 +1,13 @@
+{
+  "name": "safe4-x402-facilitator-demo",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Deployable x402 facilitator preview sidecar for Safe4 Stellar Toolkit",
+  "scripts": {
+    "start": "node server.mjs"
+  },
+  "dependencies": {
+    "express": "^5.1.0"
+  }
+}

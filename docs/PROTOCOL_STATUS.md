@@ -31,6 +31,7 @@ Implemented now:
 - `PAYMENT-RESPONSE` success header
 - request-bound payment requirement data
 - optional facilitator-aware preview seam
+- public facilitator inspection path wired to a live sidecar we control
 - payment + policy + receipt flow in one middleware boundary
 
 Not yet implemented:
@@ -41,6 +42,10 @@ Not yet implemented:
 Preview visibility endpoints:
 - `GET /protocols/x402/facilitator`
 - `GET /payments/x402/guide`
+
+Public inspection URLs:
+- `https://toolkit-api-production-a04c.up.railway.app/protocols/x402/facilitator`
+- `https://x402-facilitator-demo-production.up.railway.app/supported`
 
 ### MPP Charge status
 

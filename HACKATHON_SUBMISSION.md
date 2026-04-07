@@ -75,6 +75,8 @@ The x402 preview currently includes:
 - support for either a hosted facilitator or a self-hosted OpenZeppelin Relayer plugin base URL
 - local x402 facilitator demo sidecar for a controlled end-to-end preview flow
 - locally verified end-to-end facilitator authorize flow
+- public facilitator sidecar deployment under our control
+- public toolkit inspection endpoint that resolves against that sidecar
 
 ## Evidence
 
@@ -84,3 +86,5 @@ The x402 preview currently includes:
   - `docs/assets/demo-authorized.png`
 - verified testnet note:
   - [`docs/TESTNET_VERIFICATION.md`](docs/TESTNET_VERIFICATION.md)
+- public x402 facilitator inspection:
+  - `https://toolkit-api-production-a04c.up.railway.app/protocols/x402/facilitator`
