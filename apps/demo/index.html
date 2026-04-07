@@ -486,6 +486,20 @@
           </div>
         </div>
 
+        <div class="field-row">
+          <div>
+            <label for="recipient">Recipient context</label>
+            <input id="recipient" value="GSAFE4XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX">
+          </div>
+          <div>
+            <label for="walletToggle">Wallet-aware policy</label>
+            <select id="walletToggle">
+              <option value="off" selected>off</option>
+              <option value="on">on</option>
+            </select>
+          </div>
+        </div>
+
         <div id="txHashWrap" class="field-row" style="display: none;">
           <div>
             <label for="txHash">Transaction hash</label>
@@ -584,11 +598,18 @@
     }
 
     function currentPayload() {
+      const walletAware = document.getElementById("walletToggle").value === "on";
+      const payer = document.getElementById("payer").value.trim();
+      const recipient = document.getElementById("recipient").value.trim();
       return {
         client_id: document.getElementById("clientId").value.trim() || "demo-agent",
         text: document.getElementById("text").value.trim(),
         max_sentences: Number(document.getElementById("maxSentences").value || "2"),
-        risk_flag: document.getElementById("riskFlag").value
+        risk_flag: document.getElementById("riskFlag").value,
+        sender_address: walletAware ? payer : null,
+        recipient_address: walletAware ? recipient : null,
+        sender_network: walletAware ? "stellar" : "stellar",
+        recipient_network: walletAware ? "stellar" : "stellar"
       };
     }
 
@@ -733,16 +754,19 @@
     }
 
     async function previewPolicy() {
+      const walletAware = document.getElementById("walletToggle").value === "on";
       const params = new URLSearchParams({
         tool_name: "summarise",
         client_id: document.getElementById("clientId").value.trim() || "demo-agent",
         amount: "0.500000",
-        risk_flag: document.getElementById("riskFlag").value,
-        sender_address: document.getElementById("payer").value.trim() || "GDEMO_PAYER_ACCOUNT",
-        recipient_address: "GSAFE4XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
-        sender_network: "stellar",
-        recipient_network: "stellar"
+        risk_flag: document.getElementById("riskFlag").value
       });
+      if (walletAware) {
+        params.set("sender_address", document.getElementById("payer").value.trim() || "GDEMO_PAYER_ACCOUNT");
+        params.set("recipient_address", document.getElementById("recipient").value.trim() || "GSAFE4XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
+        params.set("sender_network", "stellar");
+        params.set("recipient_network", "stellar");
+      }
       const response = await fetchJson(`/policies/evaluate?${params.toString()}`);
       const decision = response.data?.final_policy?.decision || "unknown";
       setText("policyPreviewLine", decision);

@@ -48,6 +48,7 @@ receipts.
   - address risk
   - payment risk
   - sanctions checks
+- wallet-aware paid calls can now route through Range-backed payment risk before tool execution
 - receipt and audit output
 - a tiny browser demo at `GET /demo`
 
@@ -205,6 +206,14 @@ Range-driven inspection endpoints:
 - `GET /risk/range/address`
 - `GET /risk/range/payment`
 - `GET /risk/range/sanctions/{address}`
+
+Wallet-aware live enforcement:
+- if a paid tool request includes both `sender_address` and `recipient_address`, the toolkit can treat that call as a wallet-aware request
+- when Range is configured, payment risk can now influence the actual paid retry path:
+  - `allow` -> tool executes
+  - `review` -> tool is held and returns `review_required`
+  - `deny` -> tool is blocked and returns `denied`
+- when wallet context is supplied but Range is not configured, the toolkit currently fails safe to `review_required`
 
 ## Real Testnet Helpers
 

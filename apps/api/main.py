@@ -15,6 +15,7 @@ from packages.middleware.firewall import FirewallService
 from packages.middleware.models import (
     FetchUrlRequest,
     MockSettlementRequest,
+    PolicyDecision,
     RiskCheckRequest,
     SummariseRequest,
     TransactionHashProofRequest,
@@ -146,6 +147,54 @@ def build_app() -> FastAPI:
                 decision = "review"
         return {"decision": decision, "reasons": reasons}
 
+    def _evaluate_range_for_payload(*, payload: dict[str, Any], amount: Decimal) -> tuple[PolicyDecision | None, dict[str, Any] | None]:
+        sender_address = payload.get("sender_address")
+        recipient_address = payload.get("recipient_address")
+        if not sender_address or not recipient_address:
+            return None, None
+        if not range_risk.config.enabled:
+            return PolicyDecision(decision="review", reasons=["range_not_configured_for_wallet_risk"]), {
+                "status": "not_configured",
+                "provider": "range_risk",
+                "operation": "payment",
+                "configured": False,
+                "reason": "Wallet-aware request supplied sender/recipient addresses but Range is not configured.",
+            }
+        try:
+            result = range_risk.payment_risk(
+                sender_address=sender_address,
+                recipient_address=recipient_address,
+                amount=amount,
+                sender_network=payload.get("sender_network") or "stellar",
+                recipient_network=payload.get("recipient_network") or "stellar",
+                sender_token=payload.get("sender_token"),
+                recipient_token=payload.get("recipient_token"),
+                timestamp=payload.get("payment_timestamp"),
+            )
+            recommendation = range_risk.recommend_payment_action(result)
+            return (
+                PolicyDecision(decision=recommendation["decision"], reasons=recommendation["reasons"]),
+                {
+                    "status": "ok",
+                    "provider": "range_risk",
+                    "operation": "payment",
+                    "configured": True,
+                    "result": result,
+                    "recommendation": recommendation,
+                },
+            )
+        except Exception as exc:
+            return (
+                PolicyDecision(decision="review", reasons=["range_payment_risk_unavailable"]),
+                {
+                    "status": "error",
+                    "provider": "range_risk",
+                    "operation": "payment",
+                    "configured": True,
+                    "error": str(exc),
+                },
+            )
+
     def _payment_token_from_headers(authorization: str | None, payment_signature: str | None) -> str | None:
         token = None
         if authorization is not None and authorization.startswith("Payment "):
@@ -191,6 +240,7 @@ def build_app() -> FastAPI:
         request_id = request_id_header or ""
         if not request_id:
             raise HTTPException(status_code=400, detail="X-Request-Id is required on the paid retry.")
+        external_policy, external_risk = _evaluate_range_for_payload(payload=payload, amount=amount)
         try:
             response = firewall.authorize(
                 request_id=request_id,
@@ -198,16 +248,22 @@ def build_app() -> FastAPI:
                 payload=payload,
                 payment_token=token,
                 execute_tool=execute_tool,
+                external_policy=external_policy,
+                external_risk=external_risk,
             )
         except PermissionError as exc:
             details = json.loads(str(exc))
+            blocked_decision = details.get("decision", "deny")
             return JSONResponse(
-                status_code=403,
+                status_code=409 if blocked_decision == "review" else 403,
                 content={
-                    "status": "denied",
+                    "status": "review_required" if blocked_decision == "review" else "denied",
                     "request_id": request_id,
                     "tool": tool_name,
-                    "policy": {"decision": "deny", "reasons": details["reasons"]},
+                    "policy": {"decision": blocked_decision, "reasons": details["reasons"]},
+                    "payment": details.get("payment"),
+                    "receipt": details.get("receipt"),
+                    "external_risk": details.get("external_risk"),
                     "audit": {"audit_id": details["audit_id"]},
                 },
             )
@@ -318,9 +374,9 @@ def build_app() -> FastAPI:
                 }
             },
             "notes": [
-                "The live paid-tool flow currently enforces local policy in the main authorization path.",
-                "Range is exposed as an optional risk input and policy preview surface.",
-                "The next production step is to promote selected Range decisions into pre-execution enforcement for wallet-aware tool calls.",
+                "The live paid-tool flow always enforces local policy in the main authorization path.",
+                "When wallet-aware requests include sender and recipient addresses, Range can now influence the live paid retry path.",
+                "The next production step is to add a first-class manual review queue rather than returning review_required inline.",
             ],
         }
 

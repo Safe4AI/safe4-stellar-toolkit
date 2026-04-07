@@ -15,7 +15,7 @@ def parse_money(value: Any) -> Decimal:
 
 
 class PolicyDecision(BaseModel):
-    decision: Literal["allow", "deny"]
+    decision: Literal["allow", "deny", "review"]
     reasons: list[str] = Field(default_factory=list)
     rate_limit_remaining: int | None = None
 
@@ -76,6 +76,7 @@ class ToolExecutionResponse(BaseModel):
     payment: dict[str, Any]
     receipt: ReceiptRecord
     audit: AuditRecord
+    external_risk: dict[str, Any] | None = None
     result: dict[str, Any]
 
 
@@ -86,6 +87,13 @@ class SummariseRequest(BaseModel):
     text: str = Field(..., min_length=1, max_length=5000)
     max_sentences: int = Field(default=2, ge=1, le=5)
     risk_flag: Literal["low", "medium", "high"] = "low"
+    sender_address: str | None = Field(default=None, min_length=3)
+    recipient_address: str | None = Field(default=None, min_length=3)
+    sender_network: str = "stellar"
+    recipient_network: str = "stellar"
+    sender_token: str | None = None
+    recipient_token: str | None = None
+    payment_timestamp: str | None = None
 
 
 class FetchUrlRequest(BaseModel):
@@ -94,6 +102,13 @@ class FetchUrlRequest(BaseModel):
     client_id: str = Field(..., min_length=1)
     url: str = Field(..., min_length=8, max_length=1000)
     risk_flag: Literal["low", "medium", "high"] = "low"
+    sender_address: str | None = Field(default=None, min_length=3)
+    recipient_address: str | None = Field(default=None, min_length=3)
+    sender_network: str = "stellar"
+    recipient_network: str = "stellar"
+    sender_token: str | None = None
+    recipient_token: str | None = None
+    payment_timestamp: str | None = None
 
 
 class RiskCheckRequest(BaseModel):
@@ -103,6 +118,13 @@ class RiskCheckRequest(BaseModel):
     subject: str = Field(..., min_length=1, max_length=255)
     amount: Decimal = Field(default=Decimal("1.000000"))
     risk_flag: Literal["low", "medium", "high"] = "low"
+    sender_address: str | None = Field(default=None, min_length=3)
+    recipient_address: str | None = Field(default=None, min_length=3)
+    sender_network: str = "stellar"
+    recipient_network: str = "stellar"
+    sender_token: str | None = None
+    recipient_token: str | None = None
+    payment_timestamp: str | None = None
 
     @field_validator("amount", mode="before")
     @classmethod
