@@ -11,6 +11,12 @@ Recommended protocol framing for the demo:
 - x402: preview header surface shown in responses
 - MPP: mention as planned next protocol path, not implemented
 
+Preview x402 retry note:
+
+- the server currently accepts both:
+  - `Authorization: Payment <token>`
+  - `PAYMENT-SIGNATURE: <token>`
+
 ## Start The API
 
 ```powershell

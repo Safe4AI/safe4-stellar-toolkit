@@ -33,6 +33,7 @@ receipts.
 - a real Stellar transaction-hash verification path against Horizon data
 - preview x402 wire headers:
   - `PAYMENT-REQUIRED`
+  - `PAYMENT-SIGNATURE`
   - `PAYMENT-RESPONSE`
 - visible policy controls:
   - max spend per request

@@ -27,6 +27,7 @@ Status:
 
 Implemented now:
 - `PAYMENT-REQUIRED` response header
+- `PAYMENT-SIGNATURE` preview retry header
 - `PAYMENT-RESPONSE` success header
 - request-bound payment requirement data
 - payment + policy + receipt flow in one middleware boundary

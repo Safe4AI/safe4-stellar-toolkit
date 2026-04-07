@@ -81,10 +81,12 @@ def build_app() -> FastAPI:
         "risk-check": Decimal("1.250000"),
     }
 
-    def _payment_token_from_authorization(authorization: str | None) -> str | None:
-        if authorization is None or not authorization.startswith("Payment "):
-            return None
-        token = authorization[len("Payment ") :].strip()
+    def _payment_token_from_headers(authorization: str | None, payment_signature: str | None) -> str | None:
+        token = None
+        if authorization is not None and authorization.startswith("Payment "):
+            token = authorization[len("Payment ") :].strip()
+        elif payment_signature is not None:
+            token = payment_signature.strip()
         return token or None
 
     def _tool_payment_response(
@@ -97,9 +99,10 @@ def build_app() -> FastAPI:
         payload: dict[str, Any],
         execute_tool,
         authorization: str | None,
+        payment_signature: str | None,
         request_id_header: str | None,
     ) -> JSONResponse:
-        token = _payment_token_from_authorization(authorization)
+        token = _payment_token_from_headers(authorization, payment_signature)
         if not token:
             settle_path = (
                 "/payments/mock/settle"
@@ -246,6 +249,7 @@ def build_app() -> FastAPI:
         body: SummariseRequest,
         request: Request,
         authorization: str | None = Header(default=None, alias="Authorization"),
+        payment_signature: str | None = Header(default=None, alias="PAYMENT-SIGNATURE"),
         x_request_id: str | None = Header(default=None, alias="X-Request-Id"),
     ) -> JSONResponse:
         def execute_tool() -> dict[str, Any]:
@@ -262,6 +266,7 @@ def build_app() -> FastAPI:
             payload=body.model_dump(mode="json"),
             execute_tool=execute_tool,
             authorization=authorization,
+            payment_signature=payment_signature,
             request_id_header=x_request_id,
         )
 
@@ -270,6 +275,7 @@ def build_app() -> FastAPI:
         body: FetchUrlRequest,
         request: Request,
         authorization: str | None = Header(default=None, alias="Authorization"),
+        payment_signature: str | None = Header(default=None, alias="PAYMENT-SIGNATURE"),
         x_request_id: str | None = Header(default=None, alias="X-Request-Id"),
     ) -> JSONResponse:
         def execute_tool() -> dict[str, Any]:
@@ -291,6 +297,7 @@ def build_app() -> FastAPI:
             payload=body.model_dump(mode="json"),
             execute_tool=execute_tool,
             authorization=authorization,
+            payment_signature=payment_signature,
             request_id_header=x_request_id,
         )
 
@@ -299,6 +306,7 @@ def build_app() -> FastAPI:
         body: RiskCheckRequest,
         request: Request,
         authorization: str | None = Header(default=None, alias="Authorization"),
+        payment_signature: str | None = Header(default=None, alias="PAYMENT-SIGNATURE"),
         x_request_id: str | None = Header(default=None, alias="X-Request-Id"),
     ) -> JSONResponse:
         def execute_tool() -> dict[str, Any]:
@@ -322,6 +330,7 @@ def build_app() -> FastAPI:
             payload=body.model_dump(mode="json"),
             execute_tool=execute_tool,
             authorization=authorization,
+            payment_signature=payment_signature,
             request_id_header=x_request_id,
         )
 
@@ -338,5 +347,7 @@ if __name__ == "__main__":
         "apps.api.main:app",
         host=os.getenv("SAFE4_STELLAR_HOST", "0.0.0.0"),
         port=int(os.getenv("SAFE4_STELLAR_PORT", "8080")),
+        proxy_headers=True,
+        forwarded_allow_ips="*",
         reload=False,
     )

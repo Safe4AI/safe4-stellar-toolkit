@@ -60,6 +60,11 @@ Protocol status:
 - x402: `preview`
 - MPP: `planned`
 
+The x402 preview currently includes:
+- `PAYMENT-REQUIRED`
+- `PAYMENT-SIGNATURE`
+- `PAYMENT-RESPONSE`
+
 ## Evidence
 
 - browser screenshots:

@@ -68,6 +68,33 @@ class Safe4StellarToolkitTests(unittest.TestCase):
         self.assertEqual(body["policy"]["decision"], "allow")
         self.assertIn("payment_reference", body["payment"])
 
+    def test_preview_payment_signature_header_also_authorizes(self) -> None:
+        payload = {
+            "client_id": "demo-agent",
+            "text": "A preview x402 retry header should be accepted for the same paid tool request.",
+            "max_sentences": 1,
+            "risk_flag": "low",
+        }
+        first = self.client.post("/tools/summarise", json=payload)
+        challenge = first.json()
+
+        settle = self.client.post(
+            "/payments/mock/settle",
+            json={"request_id": challenge["request_id"], "payer": "GDEMO_PAYER_ACCOUNT"},
+        )
+        token = settle.json()["payment_token"]
+
+        authorized = self.client.post(
+            "/tools/summarise",
+            json=payload,
+            headers={
+                "PAYMENT-SIGNATURE": token,
+                "X-Request-Id": challenge["request_id"],
+            },
+        )
+        self.assertEqual(authorized.status_code, 200)
+        self.assertEqual(authorized.json()["status"], "AUTHORIZED")
+
     def test_policy_can_deny_after_payment(self) -> None:
         payload = {
             "client_id": "demo-agent",
