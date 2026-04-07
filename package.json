@@ -6,7 +6,9 @@
   "scripts": {
     "capture:screenshots": "playwright test scripts/capture-demo.spec.js --reporter=line --workers=1",
     "mpp:server": "node apps/mpp_demo/server.mjs",
-    "mpp:client": "node apps/mpp_demo/client.mjs"
+    "mpp:client": "node apps/mpp_demo/client.mjs",
+    "x402:facilitator": "node apps/x402_facilitator_demo/server.mjs",
+    "x402:demo": "python scripts/run_x402_facilitator_demo.py"
   },
   "dependencies": {
     "@stellar/mpp": "^0.4.0",

@@ -111,6 +111,26 @@ If you want to point reviewers at a concrete self-hosted path, use:
 - [`docs/X402_FACILITATOR_SETUP.md`](docs/X402_FACILITATOR_SETUP.md)
 - [`docs/X402_RELAYER_DEMO.md`](docs/X402_RELAYER_DEMO.md)
 
+### 2F. Local end-to-end x402 facilitator preview
+
+If you want a full local x402 preview under our control:
+
+```powershell
+npm run x402:facilitator
+```
+
+In another terminal:
+
+```powershell
+$env:SAFE4_STELLAR_VERIFICATION_MODE="x402_facilitator_preview"
+$env:SAFE4_X402_FACILITATOR_URL="http://127.0.0.1:3200"
+python -m uvicorn apps.api.main:app --host 0.0.0.0 --port 8080
+python scripts/run_x402_facilitator_demo.py
+```
+
+Reference:
+- [`docs/X402_FACILITATOR_DEMO.md`](docs/X402_FACILITATOR_DEMO.md)
+
 ### 2D. Optional MPP Charge preview
 
 If `SAFE4_STELLAR_VERIFICATION_MODE=mpp_charge_preview`, inspect:

@@ -107,6 +107,7 @@ In that mode, inspect:
 Facilitator deployment reference:
 - [`docs/X402_FACILITATOR_SETUP.md`](docs/X402_FACILITATOR_SETUP.md)
 - [`docs/X402_RELAYER_DEMO.md`](docs/X402_RELAYER_DEMO.md)
+- [`docs/X402_FACILITATOR_DEMO.md`](docs/X402_FACILITATOR_DEMO.md)
 
 Optional MPP Charge preview configuration:
 

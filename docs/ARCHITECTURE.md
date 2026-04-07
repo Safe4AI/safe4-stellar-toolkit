@@ -14,6 +14,8 @@
   - preview MPP Charge request and guide generation
 - `apps/mpp_demo/`
   - local Node sidecar that follows the official Stellar MPP Charge SDK path
+- `apps/x402_facilitator_demo/`
+  - local Node sidecar that exposes `/supported`, `/verify`, and `/settle` for x402 preview demos
 - `packages/policies/engine.py`
   - explicit policy checks and rate limiting
 
@@ -43,6 +45,7 @@
 - the repo now includes an optional facilitator-aware x402 preview seam, but not a complete wallet flow
 - the repo now includes an MPP Charge preview surface, but not a live `@stellar/mpp` server path
 - the repo now also includes a separate local Node MPP Charge sidecar using the official SDKs
+- the repo now also includes a separate local x402 facilitator demo sidecar for controlled end-to-end preview runs
 - MPP Session is not implemented yet
 
 ## What Makes The Demo Easy To Evaluate
