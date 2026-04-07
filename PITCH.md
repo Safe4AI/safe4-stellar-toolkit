@@ -3,7 +3,7 @@
 ## 30 Second Pitch
 
 Safe4 Stellar Toolkit is Stripe-like safety middleware for paid AI tools on
-Stellar. Instead of letting payment alone unlock execution, Safe4 verifies the
+Stellar. Instead of letting payment alone unlock execution, it verifies the
 payment context, enforces policy, and returns receipts for every tool call.
 
 ## 90 Second Pitch
@@ -14,7 +14,7 @@ agent's payment decision and tool execution. Safe4 provides that layer.
 
 In this hackathon build, a developer wraps a paid tool with Safe4. The first
 request returns a `402` Stellar payment requirement. The client pays and retries
-with payment proof. Safe4 then checks that the payment is bound to the right
+with payment proof. The server then checks that the payment is bound to the right
 request, enforces explicit policy such as max spend and risk flags, and returns
 the tool result with a receipt and audit record.
 

@@ -23,18 +23,18 @@ Receiver account:
 Payer account:
 - `GDIIDYKW4S3JHT5GQH2CZMJOA2WJKMPDHAORMDVBJVDFDGNTA35AJNS6`
 
-Safe4 request ID:
+Request ID:
 - `d38a9431b61c4835bc00eefa67360afd`
 
 Verified testnet transaction hash:
 - `ef0bcfd7c46f1f47d7c3769f60a0a9b12886bb96a67ef6b51f994acb4d2c3b83`
 
-Safe4 outcome:
+Outcome:
 - `AUTHORIZED`
 
 ## What Was Verified
 
-Safe4 accepted the paid tool call only after checking:
+The verifier accepted the paid tool call only after checking:
 
 - successful Stellar transaction
 - memo binding to the Safe4 challenge
@@ -74,7 +74,7 @@ python scripts/run_testnet_payment_demo.py --source-secret <FUNDED_TESTNET_SECRE
 ```
 
 The script prints:
-- the original Safe4 challenge
+- the original payment challenge
 - the submitted Stellar tx hash
-- the generated Safe4 proof
+- the generated payment proof
 - the final authorized response

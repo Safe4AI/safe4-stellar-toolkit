@@ -2,7 +2,7 @@
 
 ## Demo Goal
 
-Show that Safe4 lets developers monetize AI tools on Stellar safely: payment is
+Show that developers can monetize AI tools on Stellar safely: payment is
 required, policy is enforced, and receipts are returned.
 
 ## Start The API
@@ -45,7 +45,7 @@ Reference screenshots:
 ```powershell
 curl -X POST http://127.0.0.1:8080/tools/summarise ^
   -H "Content-Type: application/json" ^
-  -d "{\"client_id\":\"demo-agent\",\"text\":\"Safe4 stands between agent intent and payment execution. It verifies payment, enforces policy, and returns a receipt.\",\"max_sentences\":1,\"risk_flag\":\"low\"}"
+  -d "{\"client_id\":\"demo-agent\",\"text\":\"This middleware requires payment proof, applies policy checks, and returns a receipt-backed response.\",\"max_sentences\":1,\"risk_flag\":\"low\"}"
 ```
 
 Capture `request_id` from the `402` response.
@@ -77,7 +77,7 @@ python scripts/run_testnet_payment_demo.py --source-secret <FUNDED_TESTNET_SECRE
 This script will:
 1. request a Safe4 paid-tool challenge
 2. submit the matching Stellar testnet payment
-3. exchange the tx hash for a Safe4 payment token
+3. exchange the tx hash for a payment token
 4. retry the tool call and print the authorized result
 
 ### 3. Retry the same tool with payment proof
@@ -87,7 +87,7 @@ curl -X POST http://127.0.0.1:8080/tools/summarise ^
   -H "Content-Type: application/json" ^
   -H "X-Request-Id: <REQUEST_ID>" ^
   -H "Authorization: Payment <PAYMENT_TOKEN>" ^
-  -d "{\"client_id\":\"demo-agent\",\"text\":\"Safe4 stands between agent intent and payment execution. It verifies payment, enforces policy, and returns a receipt.\",\"max_sentences\":1,\"risk_flag\":\"low\"}"
+  -d "{\"client_id\":\"demo-agent\",\"text\":\"This middleware requires payment proof, applies policy checks, and returns a receipt-backed response.\",\"max_sentences\":1,\"risk_flag\":\"low\"}"
 ```
 
 ### 4. Show audit visibility

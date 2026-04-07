@@ -1,19 +1,11 @@
 # Stellar Adaptation
 
-## What Came From Safe4
-
-- the `payment required -> verify proof -> enforce policy -> execute -> receipt`
-  flow
-- the idea that payment proof must be bound to a specific request
-- explicit policy controls as part of the authorization path
-- receipt + audit output as first-class outputs of the system
-
-## What Is New Here
+## What This Repo Focuses On
 
 - a thin Stellar-specific payment requirement format
 - mock settlement for reliable hackathon demos
-- a real transaction-hash verification seam for future testnet use
-- a much smaller repo focused only on paid AI tool middleware
+- a real transaction-hash verification path for testnet use
+- a small repo focused only on paid AI tool middleware
 
 ## Real vs Mocked
 
@@ -42,10 +34,10 @@
 ## Why This Tradeoff
 
 Hackathon demos need to be reliable in under two minutes. The mock flow keeps
-the story crisp while preserving the exact control point Safe4 cares about:
+the story crisp while preserving the main control point:
 payment alone does not unlock execution; verified payment plus policy does.
 
 ## Remaining Hardening
 
 - support richer Stellar payment operation variants beyond the current payment-focused checks
-- capture a real testnet walkthrough artifact for the public submission
+- broaden payment asset coverage beyond the current XLM-first demo path

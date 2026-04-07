@@ -1,8 +1,9 @@
 # Safe4 Stellar Toolkit
 
-Safe4 Stellar Toolkit is a minimal, open-source hackathon extraction of Safe4:
-Stripe-like safety middleware for paid AI tools on Stellar. Every tool call is
-payment-aware, policy-aware, and receipt-backed.
+Safe4 Stellar Toolkit is middleware for paid AI tools on Stellar. It puts a
+small control layer between a tool call and execution: the client must present
+payment proof, the server still enforces policy, and every successful call
+returns a receipt plus an audit entry.
 
 ![Safe4 Stellar Toolkit demo home](docs/assets/demo-home.png)
 
@@ -11,8 +12,8 @@ payment-aware, policy-aware, and receipt-backed.
 - protects paid AI tool endpoints with a `402` payment requirement
 - binds payment proof to a specific tool call and request ID
 - enforces explicit policy before tool execution
-- returns a Safe4 receipt and append-only audit record with every decision
-- adapts Safe4's payment-firewall model to a Stellar-first demo flow
+- returns a receipt and append-only audit record with every decision
+- keeps the payment flow simple enough to demo in under two minutes
 
 ## Why Stellar
 
@@ -37,6 +38,14 @@ receipts.
 - receipt and audit output
 - a tiny browser demo at `GET /demo`
 
+## Tool Catalog
+
+| Tool | Price | Purpose |
+| --- | --- | --- |
+| `summarise` | `0.500000` | Summarise a block of text with a bounded output |
+| `fetch-url` | `0.750000` | Return safe URL metadata without fetching remote content |
+| `risk-check` | `1.250000` | Run a simple subject-level risk classification |
+
 ## Verified Today
 
 - real Stellar testnet XLM payment flow exercised successfully
@@ -46,6 +55,10 @@ receipts.
   - [`docs/TESTNET_VERIFICATION.md`](docs/TESTNET_VERIFICATION.md)
 
 ## Quickstart
+
+You can get from clone to first authorized tool call quickly. For the shortest
+path, start in `mock` mode. For the stronger hackathon path, switch to
+`transaction_hash` mode and use a real Stellar testnet payment.
 
 Requirements:
 - Python 3.13 recommended
@@ -114,7 +127,7 @@ python scripts/run_testnet_payment_demo.py --source-secret <STELLAR_SECRET>
 2. Receive `402` plus a Stellar payment requirement.
 3. Either settle through the mock path or pay on Stellar testnet and create a transaction-hash proof.
 4. Retry the exact same tool call with `Authorization: Payment <token>` and the original `X-Request-Id`.
-5. Safe4 verifies the payment context and runs policy checks.
+5. The server verifies the payment context and runs policy checks.
 6. Tool output, receipt, and audit record are returned.
 
 ## Primary Endpoints
@@ -143,7 +156,7 @@ Then:
 3. exchange the tx hash for a Safe4 payment token at `POST /payments/transaction-hash-proof`
 4. retry the tool call with `Authorization: Payment <token>` and `X-Request-Id`
 
-Safe4 verifies:
+The verifier checks:
 - transaction success
 - memo binding
 - challenge expiry
@@ -159,7 +172,7 @@ Safe4 verifies:
 - `apps/demo/`
   - lightweight demo UI
 - `packages/middleware/`
-  - Safe4 request binding, receipts, audit, and payment-gating flow
+  - request binding, receipts, audit, and payment-gating flow
 - `packages/stellar/`
   - thin Stellar adapter
 - `packages/policies/`

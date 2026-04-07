@@ -33,3 +33,11 @@
 - real transaction-hash verification is implemented, but the repo still relies on an external wallet or manual client to submit the Stellar payment
 - audit is append-only but lightweight, not a full forensic subsystem
 - policy is intentionally small and visible
+
+## What Makes The Demo Easy To Evaluate
+
+- only three paid tools
+- one visible policy layer
+- one receipt path
+- one simple audit trail
+- two proof modes, clearly labeled

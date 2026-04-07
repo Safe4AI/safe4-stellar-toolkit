@@ -5,37 +5,104 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Safe4 Stellar Toolkit Demo</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 2rem auto; max-width: 880px; padding: 0 1rem; color: #112; }
-    pre { background: #f4f6fb; padding: 1rem; overflow: auto; border-radius: 8px; }
-    button { margin-right: 0.5rem; margin-top: 0.5rem; }
+    :root {
+      --ink: #12213b;
+      --muted: #5a6782;
+      --line: #d5dfef;
+      --panel: #f5f8fc;
+      --accent: #0f766e;
+      --accent-soft: #dff8f2;
+      --warm: #f4efe6;
+    }
+    body { font-family: Georgia, "Times New Roman", serif; margin: 0; color: var(--ink); background: linear-gradient(180deg, #fcfdff 0%, #f5f8fc 100%); }
+    main { margin: 0 auto; max-width: 1040px; padding: 2rem 1rem 3rem; }
+    h1, h2, h3 { margin-top: 0; }
+    p { line-height: 1.6; }
+    pre { background: #101828; color: #e8eef8; padding: 1rem; overflow: auto; border-radius: 12px; min-height: 220px; }
+    button { margin-right: 0.5rem; margin-top: 0.5rem; border: 0; border-radius: 999px; padding: 0.7rem 1rem; background: var(--ink); color: white; cursor: pointer; }
+    button.secondary { background: white; color: var(--ink); border: 1px solid var(--line); }
+    .hero { display: grid; grid-template-columns: 1.4fr 1fr; gap: 1.5rem; align-items: start; margin-bottom: 1.5rem; }
+    .hero-panel, .panel { background: rgba(255,255,255,0.9); border: 1px solid var(--line); border-radius: 18px; padding: 1.2rem; box-shadow: 0 12px 32px rgba(18,33,59,0.06); }
+    .kicker { display: inline-block; padding: 0.35rem 0.7rem; border-radius: 999px; background: var(--accent-soft); color: var(--accent); font-size: 0.9rem; margin-bottom: 0.75rem; }
+    .muted { color: var(--muted); }
     .row { display: flex; gap: 1rem; flex-wrap: wrap; }
-    .card { flex: 1 1 280px; border: 1px solid #d9dfec; border-radius: 10px; padding: 1rem; }
+    .card { flex: 1 1 240px; border: 1px solid var(--line); background: white; border-radius: 14px; padding: 1rem; }
+    .price { font-size: 1.4rem; font-weight: bold; }
+    .catalog .card { background: var(--panel); }
+    code { background: var(--warm); padding: 0.1rem 0.3rem; border-radius: 6px; }
+    ul { padding-left: 1.2rem; }
+    @media (max-width: 800px) { .hero { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
-  <h1>Safe4 Stellar Toolkit</h1>
-  <p>Paid AI tools on Stellar, with policy checks and receipts around every tool call.</p>
+  <main>
+    <section class="hero">
+      <div class="hero-panel">
+        <div class="kicker">Paid AI tools on Stellar</div>
+        <h1>Safe4 Stellar Toolkit</h1>
+        <p>This demo shows a simple pattern: a tool call does not execute just because a payment exists. The server issues a payment requirement, checks proof against the original request, applies policy, and only then returns the tool result with a receipt.</p>
+        <p class="muted">The demo keeps two proof modes visible: a reliable mock flow for live demos and a real Stellar transaction-hash path for a stronger submission claim.</p>
+        <button id="challenge">Start demo flow</button>
+        <button id="retry" class="secondary">Retry paid call</button>
+      </div>
+      <div class="hero-panel">
+        <h2>How the flow works</h2>
+        <ul>
+          <li>Request a paid tool and receive a <code>402</code> payment challenge.</li>
+          <li>Settle it with mock proof or a real Stellar testnet payment.</li>
+          <li>Retry with the original <code>X-Request-Id</code> and payment proof.</li>
+          <li>Receive an authorized result, receipt, and audit entry.</li>
+        </ul>
+        <button id="settle" class="secondary">Create mock proof</button>
+      </div>
+    </section>
 
-  <div class="row">
-    <div class="card">
-      <h2>Step 1</h2>
-      <p>Call <code>/tools/summarise</code> without payment.</p>
-      <button id="challenge">Request payment challenge</button>
-    </div>
-    <div class="card">
-      <h2>Step 2</h2>
-      <p>Simulate a Stellar payment for the current request.</p>
-      <button id="settle">Mock settle</button>
-    </div>
-    <div class="card">
-      <h2>Step 3</h2>
-      <p>Retry the same tool call with the payment proof.</p>
-      <button id="retry">Retry paid call</button>
-    </div>
-  </div>
+    <section class="panel catalog" style="margin-bottom: 1rem;">
+      <h2>Tool catalog</h2>
+      <div class="row">
+        <div class="card">
+          <h3>/tools/summarise</h3>
+          <div class="price">0.500000 XLM</div>
+          <p class="muted">Shortens input text into a bounded summary.</p>
+        </div>
+        <div class="card">
+          <h3>/tools/fetch-url</h3>
+          <div class="price">0.750000 XLM</div>
+          <p class="muted">Returns safe URL metadata without fetching remote content.</p>
+        </div>
+        <div class="card">
+          <h3>/tools/risk-check</h3>
+          <div class="price">1.250000 XLM</div>
+          <p class="muted">Applies a small visible risk classifier to a subject string.</p>
+        </div>
+      </div>
+    </section>
 
-  <h2>Response</h2>
-  <pre id="output">Click "Request payment challenge" to begin.</pre>
+    <section class="row" style="margin-bottom: 1rem;">
+      <div class="panel" style="flex: 1 1 320px;">
+        <h2>Policy layer</h2>
+        <ul>
+          <li>Max spend per request</li>
+          <li>Deny on high risk flag</li>
+          <li>Simple rate limit by client</li>
+        </ul>
+      </div>
+      <div class="panel" style="flex: 1 1 320px;">
+        <h2>What the response includes</h2>
+        <ul>
+          <li>request ID</li>
+          <li>payment reference</li>
+          <li>policy decision</li>
+          <li>timestamped audit entry</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Live response</h2>
+      <pre id="output">Click "Start demo flow" to request a payment challenge.</pre>
+    </section>
+  </main>
 
   <script>
     const payload = {
