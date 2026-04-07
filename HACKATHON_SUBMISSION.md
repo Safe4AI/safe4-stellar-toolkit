@@ -96,6 +96,10 @@ The x402 preview currently includes:
   - [`docs/TESTNET_VERIFICATION.md`](docs/TESTNET_VERIFICATION.md)
 - public proof index:
   - [`docs/PUBLIC_PROOF.md`](docs/PUBLIC_PROOF.md)
+- submission copy:
+  - [`docs/DORAHACKS_SUBMISSION_COPY.md`](docs/DORAHACKS_SUBMISSION_COPY.md)
+- final narration:
+  - [`docs/FINAL_DEMO_NARRATION.md`](docs/FINAL_DEMO_NARRATION.md)
 - public x402 facilitator inspection:
   - `https://toolkit-api-production-a04c.up.railway.app/protocols/x402/facilitator`
 - public MPP Charge inspection:

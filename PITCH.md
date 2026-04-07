@@ -5,6 +5,8 @@
 Safe4 Stellar Toolkit is Stripe-like safety middleware for paid AI tools on
 Stellar. Instead of letting payment alone unlock execution, it verifies the
 payment context, enforces policy, and returns receipts for every tool call.
+That means agentic payments become controlled execution, not just monetized API
+access.
 
 ## 90 Second Pitch
 
@@ -18,12 +20,17 @@ with payment proof. The server then checks that the payment is bound to the righ
 request, enforces explicit policy such as max spend and risk flags, and returns
 the tool result with a receipt and audit record.
 
-The result is a simple but powerful model: paid AI tools on Stellar, with
-runtime safety controls built in.
+The strongest live execution path today is real Stellar testnet
+transaction-hash verification. Around that, the repo also exposes public x402
+and MPP proof surfaces so judges can inspect the protocol direction directly.
+
+The result is a simple but strong model: paid AI tools on Stellar, with runtime
+safety controls built in.
 
 ## Judge Hooks
 
 - paid AI tools should be policy-aware, not just payment-aware
 - Safe4 makes Stellar payments usable for agent workflows in a developer-native way
 - the demo shows both monetization and safety in the same request flow
+- the repo exposes public x402 and MPP proof surfaces, not just roadmap claims
 - the architecture is thin, reusable middleware rather than a one-off app

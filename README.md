@@ -73,6 +73,10 @@ Protocol status:
   - `https://mpp-charge-demo-production.up.railway.app`
 - public proof index:
   - [`docs/PUBLIC_PROOF.md`](docs/PUBLIC_PROOF.md)
+- submission copy:
+  - [`docs/DORAHACKS_SUBMISSION_COPY.md`](docs/DORAHACKS_SUBMISSION_COPY.md)
+- demo narration:
+  - [`docs/FINAL_DEMO_NARRATION.md`](docs/FINAL_DEMO_NARRATION.md)
 - verification notes:
   - [`docs/TESTNET_VERIFICATION.md`](docs/TESTNET_VERIFICATION.md)
 
