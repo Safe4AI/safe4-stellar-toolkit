@@ -40,6 +40,8 @@ class Safe4StellarToolkitTests(unittest.TestCase):
         }
         first = self.client.post("/tools/summarise", json=payload)
         self.assertEqual(first.status_code, 402)
+        self.assertIn("PAYMENT-REQUIRED", first.headers)
+        self.assertEqual(first.headers["X-Payment-Protocol"], "x402-stellar-preview")
         challenge = first.json()
         self.assertEqual(challenge["status"], "payment_required")
 
@@ -59,6 +61,7 @@ class Safe4StellarToolkitTests(unittest.TestCase):
             },
         )
         self.assertEqual(authorized.status_code, 200)
+        self.assertIn("PAYMENT-RESPONSE", authorized.headers)
         body = authorized.json()
         self.assertEqual(body["status"], "AUTHORIZED")
         self.assertEqual(body["tool"], "summarise")
@@ -94,6 +97,9 @@ class Safe4StellarToolkitTests(unittest.TestCase):
         audit = self.client.get("/audit/entries")
         self.assertEqual(audit.status_code, 200)
         self.assertIn("entries", audit.json())
+        protocols = self.client.get("/protocols/status")
+        self.assertEqual(protocols.status_code, 200)
+        self.assertEqual(protocols.json()["primary_demo_target"], "x402")
 
     def test_transaction_hash_verification_authorizes_with_matching_horizon_data(self) -> None:
         payload = {

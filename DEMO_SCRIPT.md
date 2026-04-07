@@ -5,6 +5,12 @@
 Show that developers can monetize AI tools on Stellar safely: payment is
 required, policy is enforced, and receipts are returned.
 
+Recommended protocol framing for the demo:
+
+- primary live proof path: real Stellar testnet `transaction_hash`
+- x402: preview header surface shown in responses
+- MPP: mention as planned next protocol path, not implemented
+
 ## Start The API
 
 ```powershell

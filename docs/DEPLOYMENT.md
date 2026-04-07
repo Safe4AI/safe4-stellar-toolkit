@@ -1,0 +1,77 @@
+# Deployment
+
+## Recommended Demo Host
+
+Railway is a good fit for the hackathon build because the repo is small, the
+app is stateless apart from the append-only audit log, and the public demo only
+needs one Python web process.
+
+## What The Container Runs
+
+The Docker image starts:
+
+```text
+python -m uvicorn apps.api.main:app --host 0.0.0.0 --port ${PORT}
+```
+
+## Required Environment Variables
+
+Minimum safe defaults:
+
+- `SAFE4_STELLAR_VERIFICATION_MODE`
+  - `mock` for the fastest public demo
+  - `transaction_hash` for the stronger real testnet demo
+- `SAFE4_STELLAR_NETWORK`
+  - usually `stellar-testnet`
+- `SAFE4_STELLAR_ASSET_CODE`
+  - `XLM` for the easiest real testnet setup
+- `SAFE4_STELLAR_ASSET_ISSUER`
+  - blank for native `XLM`
+- `SAFE4_STELLAR_DESTINATION`
+  - funded receiving testnet account
+- `SAFE4_STELLAR_HORIZON_URL`
+  - default testnet Horizon endpoint is already wired
+- `SAFE4_STELLAR_PROOF_SECRET`
+  - required if mock proof mode is enabled
+
+## Recommended Demo Config
+
+### Strongest hackathon path
+
+```text
+SAFE4_STELLAR_VERIFICATION_MODE=transaction_hash
+SAFE4_STELLAR_NETWORK=stellar-testnet
+SAFE4_STELLAR_ASSET_CODE=XLM
+SAFE4_STELLAR_ASSET_ISSUER=
+SAFE4_STELLAR_DESTINATION=<FUNDED_TESTNET_RECEIVER>
+```
+
+### Reliable fallback path
+
+```text
+SAFE4_STELLAR_VERIFICATION_MODE=mock
+SAFE4_STELLAR_ASSET_CODE=XLM
+SAFE4_STELLAR_ASSET_ISSUER=
+SAFE4_STELLAR_DESTINATION=<ANY_PLACEHOLDER_OR_TEST_ACCOUNT>
+SAFE4_STELLAR_PROOF_SECRET=<LONG_RANDOM_SECRET>
+```
+
+## Smoke Checks
+
+After deploy:
+
+1. `GET /health`
+2. `GET /protocols/status`
+3. `GET /tools`
+4. `POST /tools/summarise` and confirm:
+   - `402`
+   - `PAYMENT-REQUIRED`
+   - `WWW-Authenticate`
+5. complete either the mock or real testnet proof path
+6. confirm `PAYMENT-RESPONSE` on the successful retry
+
+## Important Safety Note
+
+Do not deploy this toolkit over the existing Safe4 production service. It should
+run as a separate demo service or separate Railway project.
+

@@ -14,6 +14,7 @@ from fastapi.responses import JSONResponse
 from packages.middleware.audit import AuditLog
 from packages.middleware.models import PaymentRequirement, ReceiptRecord, ToolExecutionResponse
 from packages.policies.engine import PolicyEngine
+from packages.protocols.x402 import build_x402_required_header
 from packages.stellar.adapter import StellarPaymentAdapter
 
 
@@ -161,6 +162,8 @@ class FirewallService:
             content=body,
             headers={
                 "WWW-Authenticate": header_value,
+                "PAYMENT-REQUIRED": build_x402_required_header(requirement=pending.requirement),
+                "X-Payment-Protocol": "x402-stellar-preview",
                 "X-Request-Id": pending.request_id,
             },
         )

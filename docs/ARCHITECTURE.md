@@ -33,6 +33,8 @@
 - real transaction-hash verification is implemented, but the repo still relies on an external wallet or manual client to submit the Stellar payment
 - audit is append-only but lightweight, not a full forensic subsystem
 - policy is intentionally small and visible
+- x402 support is currently a preview wire surface, not a full facilitator integration
+- MPP is not implemented yet
 
 ## What Makes The Demo Easy To Evaluate
 

@@ -31,12 +31,18 @@ receipts.
 - a thin Stellar payment adapter
 - a reliable mock settlement flow for hackathon demos
 - a real Stellar transaction-hash verification path against Horizon data
+- preview x402 wire headers:
+  - `PAYMENT-REQUIRED`
+  - `PAYMENT-RESPONSE`
 - visible policy controls:
   - max spend per request
   - deny on high risk flag
   - simple rate limiting
 - receipt and audit output
 - a tiny browser demo at `GET /demo`
+
+Protocol status:
+- [`docs/PROTOCOL_STATUS.md`](docs/PROTOCOL_STATUS.md)
 
 ## Tool Catalog
 
@@ -134,6 +140,7 @@ python scripts/run_testnet_payment_demo.py --source-secret <STELLAR_SECRET>
 
 - `GET /health`
 - `GET /tools`
+- `GET /protocols/status`
 - `POST /payments/mock/settle`
 - `POST /payments/transaction-hash-proof`
 - `POST /tools/summarise`
@@ -165,6 +172,18 @@ The verifier checks:
 - paid amount
 - payer binding
 
+## Protocol Position
+
+- current strongest live path:
+  - real Stellar testnet transaction-hash verification
+- current x402 status:
+  - preview wire/header surface
+- current MPP status:
+  - planned
+
+This repo does not yet claim complete Stellar x402 or MPP support. It exposes a
+clear middleware boundary today and is being extended toward those protocols.
+
 ## Repo Layout
 
 - `apps/api/`
@@ -182,13 +201,17 @@ The verifier checks:
 - `scripts/`
   - testnet account setup and real payment demo helpers
 
+Deployment notes:
+- [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md)
+
 ## Reading Order
 
 1. `README.md`
 2. `HACKATHON_SUBMISSION.md`
-3. `docs/TESTNET_VERIFICATION.md`
-4. `STELLAR_ADAPTATION.md`
-5. `DEMO_SCRIPT.md`
-6. `apps/api/main.py`
-7. `packages/middleware/firewall.py`
-8. `packages/stellar/adapter.py`
+3. `docs/PROTOCOL_STATUS.md`
+4. `docs/TESTNET_VERIFICATION.md`
+5. `STELLAR_ADAPTATION.md`
+6. `DEMO_SCRIPT.md`
+7. `apps/api/main.py`
+8. `packages/middleware/firewall.py`
+9. `packages/stellar/adapter.py`

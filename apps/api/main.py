@@ -20,6 +20,11 @@ from packages.middleware.models import (
     TransactionHashProofRequest,
 )
 from packages.policies.engine import PolicyConfig, PolicyEngine
+from packages.protocols.x402 import (
+    build_x402_required_header,
+    build_x402_response_header,
+    protocol_status,
+)
 from packages.stellar.adapter import StellarConfig, StellarPaymentAdapter
 
 
@@ -138,7 +143,14 @@ def build_app() -> FastAPI:
                 status_code=402,
                 content={"status": "payment_invalid", "request_id": request_id, "detail": str(exc)},
             )
-        return JSONResponse(status_code=200, content=response.model_dump(mode="json"))
+        return JSONResponse(
+            status_code=200,
+            content=response.model_dump(mode="json"),
+            headers={
+                "PAYMENT-RESPONSE": build_x402_response_header(response=response),
+                "X-Payment-Protocol": "x402-stellar-preview",
+            },
+        )
 
     @app.get("/")
     def root() -> dict[str, Any]:
@@ -186,6 +198,10 @@ def build_app() -> FastAPI:
                 },
             ]
         }
+
+    @app.get("/protocols/status")
+    def get_protocol_status() -> dict[str, Any]:
+        return protocol_status(verification_mode=stellar_adapter.config.verification_mode)
 
     @app.get("/audit/entries")
     def list_audit_entries() -> dict[str, Any]:

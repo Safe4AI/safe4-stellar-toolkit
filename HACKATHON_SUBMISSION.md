@@ -33,6 +33,7 @@ policy, and returns a receipt-backed tool response.
 - receipt + audit output
 - mock settlement flow for fast demos
 - real transaction-hash verification against Stellar Horizon data
+- preview x402 wire/header surface
 - client-side testnet helper scripts to create/fund accounts and execute the real demo flow
 - thin Stellar adapter with request-bound payment requirements
 - validated locally against a real Stellar testnet XLM payment path
@@ -53,6 +54,11 @@ The repo supports two proof paths:
   - fastest and most reliable for a live hackathon demo
 - `transaction_hash`
   - stronger submission claim because the verifier checks a real Stellar testnet transaction against the request requirements
+
+Protocol status:
+- real proof path today: `transaction_hash`
+- x402: `preview`
+- MPP: `planned`
 
 ## Evidence
 
