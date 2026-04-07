@@ -72,6 +72,9 @@ SAFE4_STELLAR_DESTINATION=<ANY_PLACEHOLDER_OR_TEST_ACCOUNT>
 SAFE4_STELLAR_PROOF_SECRET=<LONG_RANDOM_SECRET>
 ```
 
+Do not expect `transaction_hash` mode to accept mock proof tokens. The service
+now enforces that mode boundary explicitly.
+
 ## Smoke Checks
 
 After deploy:

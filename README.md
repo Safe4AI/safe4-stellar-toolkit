@@ -200,6 +200,10 @@ The verifier checks:
 This repo does not yet claim complete Stellar x402 or MPP support. It exposes a
 clear middleware boundary today and is being extended toward those protocols.
 
+Important demo note:
+- `mock` settlement is only accepted when `SAFE4_STELLAR_VERIFICATION_MODE=mock`
+- `transaction_hash` mode does not silently fall back to mock proofs
+
 ## Repo Layout
 
 - `apps/api/`

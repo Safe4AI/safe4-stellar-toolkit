@@ -214,6 +214,34 @@ class Safe4StellarToolkitTests(unittest.TestCase):
             self.assertEqual(authorized.json()["status"], "AUTHORIZED")
             self.assertEqual(authorized.json()["payment"]["payment_reference"], "tx_1234567890abcdef")
 
+    def test_mock_settlement_is_disabled_outside_mock_mode(self) -> None:
+        payload = {
+            "client_id": "demo-agent",
+            "text": "Transaction hash mode should not accept mock settlement.",
+            "max_sentences": 1,
+            "risk_flag": "low",
+        }
+        with patch.dict(
+            os.environ,
+            {
+                "SAFE4_STELLAR_VERIFICATION_MODE": "transaction_hash",
+                "SAFE4_STELLAR_ASSET_CODE": "XLM",
+                "SAFE4_STELLAR_ASSET_ISSUER": "",
+            },
+            clear=False,
+        ):
+            client = TestClient(build_app())
+            first = client.post("/tools/summarise", json=payload)
+            self.assertEqual(first.status_code, 402)
+            challenge = first.json()
+
+            settle = client.post(
+                "/payments/mock/settle",
+                json={"request_id": challenge["request_id"], "payer": "GDEMO_PAYER_ACCOUNT"},
+            )
+            self.assertEqual(settle.status_code, 409)
+            self.assertIn("disabled", settle.json()["detail"])
+
     def test_transaction_hash_verification_rejects_wrong_destination(self) -> None:
         payload = {
             "client_id": "demo-agent",

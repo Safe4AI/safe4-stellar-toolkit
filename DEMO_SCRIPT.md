@@ -125,5 +125,6 @@ curl http://127.0.0.1:8080/audit/entries
 ## Fallback
 
 If live Stellar testnet verification is not configured, use the mock settlement
-path above. The repo labels that clearly and keeps the Stellar transaction-hash
-path as a reliable fallback.
+path above, but only after switching `SAFE4_STELLAR_VERIFICATION_MODE=mock`.
+The repo does not accept mock settlement while running in `transaction_hash`
+mode.

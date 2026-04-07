@@ -265,6 +265,11 @@ def build_app() -> FastAPI:
 
     @app.post("/payments/mock/settle")
     def mock_settle(body: MockSettlementRequest) -> dict[str, Any]:
+        if stellar_adapter.config.verification_mode != "mock":
+            raise HTTPException(
+                status_code=409,
+                detail="Mock settlement is disabled unless SAFE4_STELLAR_VERIFICATION_MODE=mock.",
+            )
         pending = firewall.get_pending(body.request_id)
         if pending is None:
             raise HTTPException(status_code=404, detail="Unknown request_id.")

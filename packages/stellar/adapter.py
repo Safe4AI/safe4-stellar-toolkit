@@ -135,6 +135,8 @@ class StellarPaymentAdapter:
         if proof.memo != requirement.memo:
             raise ValueError("Payment memo mismatch.")
         if proof.mode == "mock":
+            if self.config.verification_mode != "mock":
+                raise ValueError("Mock payment proof is disabled unless SAFE4_STELLAR_VERIFICATION_MODE=mock.")
             return proof
         return self._verify_transaction_hash(requirement=requirement, proof=proof)
 

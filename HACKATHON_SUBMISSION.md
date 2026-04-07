@@ -56,6 +56,9 @@ The repo supports two proof paths:
 - `transaction_hash`
   - stronger submission claim because the verifier checks a real Stellar testnet transaction against the request requirements
 
+These modes are now enforced separately. Running in `transaction_hash` mode does
+not allow mock settlement as a silent fallback.
+
 Protocol status:
 - real proof path today: `transaction_hash`
 - x402: `preview`
