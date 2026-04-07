@@ -72,6 +72,7 @@ The x402 preview currently includes:
 - `PAYMENT-SIGNATURE`
 - `PAYMENT-RESPONSE`
 - facilitator status and guide endpoints for judge inspection
+- support for either a hosted facilitator or a self-hosted OpenZeppelin Relayer plugin base URL
 
 ## Evidence
 

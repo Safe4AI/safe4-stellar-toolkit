@@ -104,6 +104,9 @@ In that mode, inspect:
 - `GET /protocols/x402/facilitator`
 - `GET /payments/x402/guide`
 
+Facilitator deployment reference:
+- [`docs/X402_FACILITATOR_SETUP.md`](docs/X402_FACILITATOR_SETUP.md)
+
 Optional MPP Charge preview configuration:
 
 ```powershell

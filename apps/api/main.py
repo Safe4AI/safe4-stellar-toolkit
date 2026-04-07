@@ -255,9 +255,23 @@ def build_app() -> FastAPI:
                 "api_key_configured": stellar_adapter.facilitator.api_key_configured,
                 "url": stellar_adapter.facilitator.url if stellar_adapter.facilitator.configured else None,
             },
+            "deployment_options": {
+                "hosted_channels": {
+                    "base_url": "https://channels.openzeppelin.com/x402/testnet",
+                    "requires_api_key": True,
+                },
+                "self_hosted_relayer_plugin": {
+                    "base_url_pattern": "http://localhost:8080/api/v1/plugins/x402-facilitator/call",
+                    "requires_hosted_channels_api_key": False,
+                    "notes": [
+                        "This path expects you to run the OpenZeppelin Relayer plugin yourself.",
+                        "The plugin exposes /verify, /settle, and /supported under the /call router.",
+                    ],
+                },
+            },
             "notes": [
                 "This preview expects a client or wallet that can produce an x402 PAYMENT-SIGNATURE payload.",
-                "For live Stellar x402, use an auth-entry-signing wallet and a facilitator such as the OpenZeppelin or Coinbase-compatible x402 endpoints.",
+                "For live Stellar x402, use an auth-entry-signing wallet and either a hosted facilitator or a self-hosted OpenZeppelin Relayer x402 plugin.",
                 "The current strongest live proof path in this deployment remains transaction_hash mode unless x402_facilitator_preview is enabled.",
             ],
         }

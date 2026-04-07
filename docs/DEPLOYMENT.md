@@ -62,6 +62,17 @@ SAFE4_X402_FACILITATOR_URL=https://channels.openzeppelin.com/x402/testnet
 SAFE4_X402_FACILITATOR_API_KEY=<OPTIONAL_TESTNET_API_KEY>
 ```
 
+Self-hosted Relayer plugin variant:
+
+```text
+SAFE4_STELLAR_VERIFICATION_MODE=x402_facilitator_preview
+SAFE4_X402_FACILITATOR_URL=http://localhost:8080/api/v1/plugins/x402-facilitator/call
+SAFE4_X402_FACILITATOR_API_KEY=
+```
+
+Reference:
+- [`docs/X402_FACILITATOR_SETUP.md`](X402_FACILITATOR_SETUP.md)
+
 ### Optional MPP Charge preview config
 
 ```text

@@ -88,6 +88,10 @@ Use this when you have:
 - a configured facilitator URL
 - optionally an API key for facilitator-backed verify and settle
 
+Facilitator deployment options:
+- hosted OpenZeppelin Channels
+- self-hosted OpenZeppelin Relayer x402 plugin
+
 ### Optional MPP Charge preview path
 
 - `mpp_charge_preview`
