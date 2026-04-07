@@ -53,6 +53,7 @@ Implemented now:
 - `GET /protocols/mpp/charge`
 - `GET /payments/mpp/charge/guide`
 - `mpp_charge_preview` challenge framing
+- local Node sidecar demo based on `@stellar/mpp`
 
 Not yet implemented:
 - `@stellar/mpp` charge flow

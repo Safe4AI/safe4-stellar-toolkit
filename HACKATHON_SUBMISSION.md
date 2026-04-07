@@ -36,6 +36,7 @@ policy, and returns a receipt-backed tool response.
 - preview x402 wire/header surface
 - optional facilitator-aware x402 preview seam
 - MPP Charge preview guide and challenge surface
+- local Node sidecar using the official `@stellar/mpp` SDK path
 - client-side testnet helper scripts to create/fund accounts and execute the real demo flow
 - thin Stellar adapter with request-bound payment requirements
 - validated locally against a real Stellar testnet XLM payment path

@@ -107,3 +107,9 @@ After deploy:
 
 Do not deploy this toolkit over the existing Safe4 production service. It should
 run as a separate demo service or separate Railway project.
+
+## Node MPP Sidecar
+
+The official `@stellar/mpp` Charge demo asset in `apps/mpp_demo/` is currently
+local-only. It is intentionally not part of the Railway deployment for the
+Python app.

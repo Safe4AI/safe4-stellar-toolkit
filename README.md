@@ -37,6 +37,7 @@ receipts.
   - `PAYMENT-RESPONSE`
 - optional facilitator-aware x402 preview seam
 - MPP Charge preview guide and challenge framing
+- Node sidecar demo for real `@stellar/mpp` Charge flows
 - visible policy controls:
   - max spend per request
   - deny on high risk flag
@@ -112,6 +113,18 @@ SAFE4_STELLAR_VERIFICATION_MODE=mpp_charge_preview
 In that mode, inspect:
 - `GET /protocols/mpp/charge`
 - `GET /payments/mpp/charge/guide`
+
+Real local MPP Charge demo asset:
+
+```powershell
+npm install
+Copy-Item .env.mpp.example .env.mpp
+npm run mpp:server
+npm run mpp:client
+```
+
+Reference:
+- [`docs/MPP_CHARGE_DEMO.md`](docs/MPP_CHARGE_DEMO.md)
 
 Run:
 
@@ -224,6 +237,8 @@ Important demo note:
   - FastAPI app and demo endpoints
 - `apps/demo/`
   - lightweight demo UI
+- `apps/mpp_demo/`
+  - Node sidecar for real `@stellar/mpp` Charge demos
 - `packages/middleware/`
   - request binding, receipts, audit, and payment-gating flow
 - `packages/stellar/`

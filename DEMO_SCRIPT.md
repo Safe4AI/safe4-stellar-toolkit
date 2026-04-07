@@ -120,6 +120,20 @@ Then request a paid tool and show that the `402` response now carries:
 - `X-Payment-Protocol: mpp-charge-preview`
 - `MPP-CHARGE-REQUIRED`
 
+### 2E. Optional real local MPP Charge sidecar
+
+If you want to show a real official-SDK MPP path locally:
+
+```powershell
+npm install
+Copy-Item .env.mpp.example .env.mpp
+npm run mpp:server
+npm run mpp:client
+```
+
+This sidecar is local-only today. It exists to demonstrate a real `@stellar/mpp`
+route without changing the main deployed Python app.
+
 ### 3. Retry the same tool with payment proof
 
 ```powershell
