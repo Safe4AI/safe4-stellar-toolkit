@@ -20,6 +20,7 @@ from packages.middleware.models import (
     TransactionHashProofRequest,
 )
 from packages.policies.engine import PolicyConfig, PolicyEngine
+from packages.policies.range import RangeRiskClient, RangeRiskConfig
 from packages.protocols.mpp import MppChargeServiceClient, build_mpp_charge_guide
 from packages.protocols.x402 import (
     build_x402_required_header,
@@ -67,6 +68,27 @@ def build_app() -> FastAPI:
         )
     )
     mpp_charge_service = MppChargeServiceClient(url=os.getenv("SAFE4_MPP_CHARGE_SERVICE_URL"))
+    range_risk = RangeRiskClient(
+        RangeRiskConfig(
+            api_key=os.getenv("SAFE4_RANGE_API_KEY"),
+            base_url=os.getenv("SAFE4_RANGE_BASE_URL", "https://api.range.org").strip() or "https://api.range.org",
+            address_deny_score=int(os.getenv("SAFE4_RANGE_ADDRESS_DENY_SCORE", "8")),
+            address_review_score=int(os.getenv("SAFE4_RANGE_ADDRESS_REVIEW_SCORE", "5")),
+            deny_payment_levels=tuple(
+                level.strip().lower()
+                for level in os.getenv("SAFE4_RANGE_DENY_PAYMENT_LEVELS", "high").split(",")
+                if level.strip()
+            )
+            or ("high",),
+            review_payment_levels=tuple(
+                level.strip().lower()
+                for level in os.getenv("SAFE4_RANGE_REVIEW_PAYMENT_LEVELS", "medium,unknown").split(",")
+                if level.strip()
+            )
+            or ("medium", "unknown"),
+            sanctions_deny=(os.getenv("SAFE4_RANGE_SANCTIONS_DENY", "true").strip().lower() != "false"),
+        )
+    )
     policy_engine = PolicyEngine(
         PolicyConfig(
             max_spend_per_request=_env_decimal("SAFE4_STELLAR_MAX_SPEND_PER_REQUEST", "2.000000"),
@@ -85,6 +107,44 @@ def build_app() -> FastAPI:
         "fetch-url": Decimal("0.750000"),
         "risk-check": Decimal("1.250000"),
     }
+
+    def _range_not_configured(*, operation: str) -> dict[str, Any]:
+        return {
+            "status": "not_configured",
+            "provider": "range_risk",
+            "operation": operation,
+            "configured": False,
+            "docs": "https://docs.range.org/risk-api/risk-introduction",
+        }
+
+    def _range_error(*, operation: str, exc: Exception) -> dict[str, Any]:
+        return {
+            "status": "error",
+            "provider": "range_risk",
+            "operation": operation,
+            "configured": True,
+            "error": str(exc),
+        }
+
+    def _final_policy_preview(
+        *,
+        local_decision: str,
+        local_reasons: list[str],
+        range_recommendation: dict[str, Any] | None,
+        range_status: str,
+    ) -> dict[str, Any]:
+        reasons = list(local_reasons)
+        if range_recommendation is not None:
+            reasons.extend(range_recommendation.get("reasons", []))
+        decision = local_decision
+        if decision != "deny":
+            if range_recommendation is not None and range_recommendation.get("decision") == "deny":
+                decision = "deny"
+            elif range_recommendation is not None and range_recommendation.get("decision") == "review":
+                decision = "review"
+            elif range_status == "error":
+                decision = "review"
+        return {"decision": decision, "reasons": reasons}
 
     def _payment_token_from_headers(authorization: str | None, payment_signature: str | None) -> str | None:
         token = None
@@ -187,6 +247,7 @@ def build_app() -> FastAPI:
             "network": stellar_adapter.config.network,
             "asset_code": stellar_adapter.config.asset_code,
             "x402_facilitator_configured": stellar_adapter.facilitator.configured,
+            "range_risk_configured": range_risk.config.enabled,
         }
 
     @app.get("/demo")
@@ -225,6 +286,192 @@ def build_app() -> FastAPI:
         if stellar_adapter.facilitator.configured:
             status["x402"]["facilitator_url"] = stellar_adapter.facilitator.url
         return status
+
+    @app.get("/policies/status")
+    def get_policy_status() -> dict[str, Any]:
+        return {
+            "status": "active",
+            "engine": "safe4-policy-preview",
+            "enforcement_order": [
+                "request binding",
+                "payment proof verification",
+                "local policy checks",
+                "optional external risk signals",
+                "tool execution",
+                "receipt and audit append",
+            ],
+            "local_policy": {
+                "max_spend_per_request": format(policy_engine.config.max_spend_per_request, "f"),
+                "rate_limit_requests": policy_engine.config.rate_limit_requests,
+                "rate_limit_window_seconds": policy_engine.config.rate_limit_window_seconds,
+                "denied_tools": list(policy_engine.config.denied_tools),
+            },
+            "external_risk": {
+                "range_risk": {
+                    "configured": range_risk.config.enabled,
+                    "base_url": range_risk.config.base_url,
+                    "address_review_score": range_risk.config.address_review_score,
+                    "address_deny_score": range_risk.config.address_deny_score,
+                    "deny_payment_levels": list(range_risk.config.deny_payment_levels),
+                    "review_payment_levels": list(range_risk.config.review_payment_levels),
+                    "sanctions_deny": range_risk.config.sanctions_deny,
+                }
+            },
+            "notes": [
+                "The live paid-tool flow currently enforces local policy in the main authorization path.",
+                "Range is exposed as an optional risk input and policy preview surface.",
+                "The next production step is to promote selected Range decisions into pre-execution enforcement for wallet-aware tool calls.",
+            ],
+        }
+
+    @app.get("/policies/evaluate")
+    def evaluate_policy(
+        tool_name: str,
+        client_id: str,
+        amount: Decimal,
+        risk_flag: str = "low",
+        sender_address: str | None = None,
+        recipient_address: str | None = None,
+        sender_network: str = "stellar",
+        recipient_network: str = "stellar",
+        sender_token: str | None = None,
+        recipient_token: str | None = None,
+        timestamp: str | None = None,
+    ) -> dict[str, Any]:
+        local = policy_engine.evaluate(
+            tool_name=tool_name,
+            client_id=client_id,
+            amount=amount,
+            risk_flag=risk_flag,
+            consume_rate_limit=False,
+        )
+        range_status = "skipped"
+        range_payload: dict[str, Any] | None = None
+        recommendation: dict[str, Any] | None = None
+        if sender_address and recipient_address:
+            if not range_risk.config.enabled:
+                range_status = "not_configured"
+                range_payload = _range_not_configured(operation="payment")
+            else:
+                try:
+                    result = range_risk.payment_risk(
+                        sender_address=sender_address,
+                        recipient_address=recipient_address,
+                        amount=amount,
+                        sender_network=sender_network,
+                        recipient_network=recipient_network,
+                        sender_token=sender_token,
+                        recipient_token=recipient_token,
+                        timestamp=timestamp,
+                    )
+                    recommendation = range_risk.recommend_payment_action(result)
+                    range_status = "ok"
+                    range_payload = {
+                        "status": "ok",
+                        "provider": "range_risk",
+                        "operation": "payment",
+                        "configured": True,
+                        "result": result,
+                        "recommendation": recommendation,
+                    }
+                except Exception as exc:
+                    range_status = "error"
+                    range_payload = _range_error(operation="payment", exc=exc)
+        final_policy = _final_policy_preview(
+            local_decision=local.decision,
+            local_reasons=local.reasons,
+            range_recommendation=recommendation,
+            range_status=range_status,
+        )
+        return {
+            "status": "evaluated",
+            "input": {
+                "tool_name": tool_name,
+                "client_id": client_id,
+                "amount": format(amount, "f"),
+                "risk_flag": risk_flag,
+                "sender_address": sender_address,
+                "recipient_address": recipient_address,
+                "sender_network": sender_network,
+                "recipient_network": recipient_network,
+            },
+            "local_policy": local.model_dump(mode="json"),
+            "range_risk": range_payload
+            or {
+                "status": "skipped",
+                "reason": "Provide sender_address and recipient_address to evaluate payment risk.",
+            },
+            "final_policy": final_policy,
+        }
+
+    @app.get("/risk/range/address")
+    def get_range_address_risk(address: str, network: str = "stellar") -> dict[str, Any]:
+        if not range_risk.config.enabled:
+            return _range_not_configured(operation="address")
+        try:
+            result = range_risk.address_risk(address=address, network=network)
+            return {
+                "status": "ok",
+                "provider": "range_risk",
+                "operation": "address",
+                "configured": True,
+                "result": result,
+                "recommendation": range_risk.recommend_address_action(result),
+            }
+        except Exception as exc:
+            return _range_error(operation="address", exc=exc)
+
+    @app.get("/risk/range/payment")
+    def get_range_payment_risk(
+        sender_address: str,
+        recipient_address: str,
+        amount: Decimal,
+        sender_network: str = "stellar",
+        recipient_network: str = "stellar",
+        sender_token: str | None = None,
+        recipient_token: str | None = None,
+        timestamp: str | None = None,
+    ) -> dict[str, Any]:
+        if not range_risk.config.enabled:
+            return _range_not_configured(operation="payment")
+        try:
+            result = range_risk.payment_risk(
+                sender_address=sender_address,
+                recipient_address=recipient_address,
+                amount=amount,
+                sender_network=sender_network,
+                recipient_network=recipient_network,
+                sender_token=sender_token,
+                recipient_token=recipient_token,
+                timestamp=timestamp,
+            )
+            return {
+                "status": "ok",
+                "provider": "range_risk",
+                "operation": "payment",
+                "configured": True,
+                "result": result,
+                "recommendation": range_risk.recommend_payment_action(result),
+            }
+        except Exception as exc:
+            return _range_error(operation="payment", exc=exc)
+
+    @app.get("/risk/range/sanctions/{address}")
+    def get_range_sanctions(address: str, network: str | None = None, include_details: bool = True) -> dict[str, Any]:
+        if not range_risk.config.enabled:
+            return _range_not_configured(operation="sanctions")
+        try:
+            result = range_risk.sanctions(address=address, network=network, include_details=include_details)
+            return {
+                "status": "ok",
+                "provider": "range_risk",
+                "operation": "sanctions",
+                "configured": True,
+                "result": result,
+                "recommendation": range_risk.recommend_sanctions_action(result),
+            }
+        except Exception as exc:
+            return _range_error(operation="sanctions", exc=exc)
 
     @app.get("/protocols/x402/facilitator")
     def get_x402_facilitator_status() -> dict[str, Any]:

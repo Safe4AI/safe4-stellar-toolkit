@@ -44,6 +44,10 @@ receipts.
   - max spend per request
   - deny on high risk flag
   - simple rate limiting
+- optional Range Risk API screening surfaces for:
+  - address risk
+  - payment risk
+  - sanctions checks
 - receipt and audit output
 - a tiny browser demo at `GET /demo`
 
@@ -188,6 +192,20 @@ npm run capture:screenshots
 npm run capture:public-proof
 ```
 
+Optional Range risk configuration:
+
+```powershell
+SAFE4_RANGE_API_KEY=<RANGE_API_KEY>
+SAFE4_RANGE_BASE_URL=https://api.range.org
+```
+
+Range-driven inspection endpoints:
+- `GET /policies/status`
+- `GET /policies/evaluate`
+- `GET /risk/range/address`
+- `GET /risk/range/payment`
+- `GET /risk/range/sanctions/{address}`
+
 ## Real Testnet Helpers
 
 Create and fund a payer account:
@@ -219,10 +237,15 @@ python scripts/run_testnet_payment_demo.py --source-secret <STELLAR_SECRET>
 - `GET /protocols/x402/facilitator`
 - `GET /protocols/mpp/charge`
 - `GET /protocols/mpp/session`
+- `GET /policies/status`
+- `GET /policies/evaluate`
 - `POST /payments/mock/settle`
 - `POST /payments/transaction-hash-proof`
 - `GET /payments/x402/guide`
 - `GET /payments/mpp/charge/guide`
+- `GET /risk/range/address`
+- `GET /risk/range/payment`
+- `GET /risk/range/sanctions/{address}`
 - `POST /tools/summarise`
 - `POST /tools/fetch-url`
 - `POST /tools/risk-check`

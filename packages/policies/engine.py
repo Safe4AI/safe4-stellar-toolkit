@@ -35,6 +35,16 @@ class RateLimiter:
             window.append(now)
             return True, max(0, self.limit - len(window))
 
+    def peek(self, key: str) -> tuple[bool, int]:
+        now = time.time()
+        with self._lock:
+            window = self._events[key]
+            while window and now - window[0] > self.window_seconds:
+                window.popleft()
+            if len(window) >= self.limit:
+                return False, 0
+            return True, max(0, self.limit - len(window) - 1)
+
 
 class PolicyEngine:
     def __init__(self, config: PolicyConfig) -> None:
@@ -51,6 +61,7 @@ class PolicyEngine:
         client_id: str,
         amount: Decimal,
         risk_flag: str,
+        consume_rate_limit: bool = True,
     ) -> PolicyDecision:
         reasons: list[str] = []
         if tool_name in self.config.denied_tools:
@@ -59,7 +70,11 @@ class PolicyEngine:
             reasons.append("amount_exceeds_max_spend_per_request")
         if risk_flag == "high":
             reasons.append("risk_flag_high")
-        rate_ok, remaining = self.rate_limiter.check(client_id)
+        rate_ok, remaining = (
+            self.rate_limiter.check(client_id)
+            if consume_rate_limit
+            else self.rate_limiter.peek(client_id)
+        )
         if not rate_ok:
             reasons.append("rate_limit_exceeded")
         return PolicyDecision(

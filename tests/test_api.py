@@ -123,12 +123,71 @@ class Safe4StellarToolkitTests(unittest.TestCase):
     def test_demo_page_and_audit_endpoint_exist(self) -> None:
         demo = self.client.get("/demo")
         self.assertEqual(demo.status_code, 200)
+        self.assertIn("Control every paid tool call before it executes.", demo.text)
         audit = self.client.get("/audit/entries")
         self.assertEqual(audit.status_code, 200)
         self.assertIn("entries", audit.json())
         protocols = self.client.get("/protocols/status")
         self.assertEqual(protocols.status_code, 200)
         self.assertEqual(protocols.json()["primary_demo_target"], "x402")
+
+    def test_policy_status_and_range_endpoints_report_not_configured_by_default(self) -> None:
+        policy_status = self.client.get("/policies/status")
+        self.assertEqual(policy_status.status_code, 200)
+        self.assertFalse(policy_status.json()["external_risk"]["range_risk"]["configured"])
+
+        address = self.client.get("/risk/range/address", params={"address": "GABCDEF1234567890", "network": "stellar"})
+        self.assertEqual(address.status_code, 200)
+        self.assertEqual(address.json()["status"], "not_configured")
+
+        evaluate = self.client.get(
+            "/policies/evaluate",
+            params={
+                "tool_name": "summarise",
+                "client_id": "demo-agent",
+                "amount": "0.500000",
+                "risk_flag": "low",
+                "sender_address": "GAAA111111111111111",
+                "recipient_address": "GBBB222222222222222",
+            },
+        )
+        self.assertEqual(evaluate.status_code, 200)
+        self.assertEqual(evaluate.json()["range_risk"]["status"], "not_configured")
+        self.assertEqual(evaluate.json()["final_policy"]["decision"], "allow")
+
+    def test_policy_preview_does_not_consume_live_rate_limit(self) -> None:
+        with patch.dict(
+            os.environ,
+            {
+                "SAFE4_STELLAR_RATE_LIMIT_REQUESTS": "1",
+                "SAFE4_STELLAR_RATE_LIMIT_WINDOW_SECONDS": "60",
+            },
+            clear=False,
+        ):
+            client = TestClient(build_app())
+            for _ in range(3):
+                preview = client.get(
+                    "/policies/evaluate",
+                    params={
+                        "tool_name": "summarise",
+                        "client_id": "rate-preview-agent",
+                        "amount": "0.500000",
+                        "risk_flag": "low",
+                    },
+                )
+                self.assertEqual(preview.status_code, 200)
+                self.assertEqual(preview.json()["final_policy"]["decision"], "allow")
+
+            first = client.post(
+                "/tools/summarise",
+                json={
+                    "client_id": "rate-preview-agent",
+                    "text": "Policy preview should not burn the live rate limiter.",
+                    "max_sentences": 1,
+                    "risk_flag": "low",
+                },
+            )
+            self.assertEqual(first.status_code, 402)
 
     def test_x402_facilitator_status_reports_not_configured_by_default(self) -> None:
         response = self.client.get("/protocols/x402/facilitator")
@@ -453,3 +512,88 @@ class Safe4StellarToolkitTests(unittest.TestCase):
                 self.assertEqual(service.status_code, 200)
                 self.assertEqual(service.json()["url"], "https://mpp-charge-demo.example")
                 self.assertTrue(service.json()["health"]["configured"])
+
+    def test_range_payment_risk_endpoint_and_policy_preview_use_provider_signal(self) -> None:
+        payment_payload = {
+            "overall_risk_level": "high",
+            "risk_factors": [
+                {
+                    "factor": "first_interaction",
+                    "risk_level": "high",
+                    "description": "First ever interaction between these addresses",
+                }
+            ],
+            "processing_time_ms": 812.0,
+            "errors": [],
+            "request_summary": {
+                "sender_address": "GAAA111111111111111",
+                "recipient_address": "GBBB222222222222222",
+                "amount": 10.0,
+                "sender_network": "stellar",
+                "recipient_network": "stellar",
+                "sender_token": None,
+                "recipient_token": None,
+                "timestamp": None,
+            },
+        }
+        with patch.dict(
+            os.environ,
+            {
+                "SAFE4_RANGE_API_KEY": "range-demo-key",
+            },
+            clear=False,
+        ):
+            with patch("packages.policies.range.httpx.get", return_value=FakeHttpResponse(payment_payload)):
+                client = TestClient(build_app())
+                payment = client.get(
+                    "/risk/range/payment",
+                    params={
+                        "sender_address": "GAAA111111111111111",
+                        "recipient_address": "GBBB222222222222222",
+                        "amount": "10.0",
+                        "sender_network": "stellar",
+                        "recipient_network": "stellar",
+                    },
+                )
+                self.assertEqual(payment.status_code, 200)
+                self.assertEqual(payment.json()["status"], "ok")
+                self.assertEqual(payment.json()["recommendation"]["decision"], "deny")
+
+                evaluate = client.get(
+                    "/policies/evaluate",
+                    params={
+                        "tool_name": "risk-check",
+                        "client_id": "demo-agent",
+                        "amount": "1.250000",
+                        "risk_flag": "low",
+                        "sender_address": "GAAA111111111111111",
+                        "recipient_address": "GBBB222222222222222",
+                        "sender_network": "stellar",
+                        "recipient_network": "stellar",
+                    },
+                )
+                self.assertEqual(evaluate.status_code, 200)
+                self.assertEqual(evaluate.json()["range_risk"]["status"], "ok")
+                self.assertEqual(evaluate.json()["final_policy"]["decision"], "deny")
+                self.assertIn("range_payment_risk_high", evaluate.json()["final_policy"]["reasons"])
+
+    def test_range_sanctions_endpoint_returns_policy_recommendation(self) -> None:
+        sanctions_payload = {
+            "is_token_blacklisted": False,
+            "is_ofac_sanctioned": True,
+            "matches": [],
+        }
+        with patch.dict(
+            os.environ,
+            {
+                "SAFE4_RANGE_API_KEY": "range-demo-key",
+            },
+            clear=False,
+        ):
+            with patch("packages.policies.range.httpx.get", return_value=FakeHttpResponse(sanctions_payload)):
+                client = TestClient(build_app())
+                response = client.get("/risk/range/sanctions/GAAA111111111111111", params={"network": "stellar"})
+                self.assertEqual(response.status_code, 200)
+                self.assertEqual(response.json()["status"], "ok")
+                self.assertEqual(response.json()["recommendation"]["decision"], "deny")
+                self.assertIn("range_ofac_sanctioned", response.json()["recommendation"]["reasons"])
