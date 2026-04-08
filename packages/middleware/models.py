@@ -56,6 +56,7 @@ class ReceiptRecord(BaseModel):
     policy_decision: PolicyDecision
     payment_mode: str
     payer: str
+    risk_summary: dict[str, Any] | None = None
 
 
 class AuditRecord(BaseModel):
@@ -66,6 +67,7 @@ class AuditRecord(BaseModel):
     timestamp: datetime
     payment_reference: str | None = None
     policy_reasons: list[str] = Field(default_factory=list)
+    risk_summary: dict[str, Any] | None = None
 
 
 class ReviewRecord(BaseModel):

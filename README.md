@@ -216,6 +216,7 @@ Wallet-aware live enforcement:
 - when wallet context is supplied but Range is not configured, the toolkit currently fails safe to `review_required`
 - `review_required` requests now enter a lightweight review queue and can be released or rejected on the same `request_id`
 - the demo UI now exposes that review queue directly so a reviewer can inspect and resolve holds without leaving the page
+- receipts and audit entries now include a compact risk summary when external screening influenced the decision
 
 ## Real Testnet Helpers
 

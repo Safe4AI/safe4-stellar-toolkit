@@ -25,6 +25,7 @@ class AuditLog:
         outcome: str,
         payment_reference: str | None,
         policy_reasons: list[str],
+        risk_summary: dict | None = None,
     ) -> AuditRecord:
         record = AuditRecord(
             audit_id=uuid4().hex,
@@ -34,6 +35,7 @@ class AuditLog:
             timestamp=datetime.now(timezone.utc),
             payment_reference=payment_reference,
             policy_reasons=list(policy_reasons),
+            risk_summary=risk_summary,
         )
         with self._lock:
             self._records.append(record)

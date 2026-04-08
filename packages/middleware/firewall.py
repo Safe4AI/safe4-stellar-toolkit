@@ -47,6 +47,41 @@ class FirewallService:
         self._pending: dict[str, PendingToolCall] = {}
         self._lock = threading.Lock()
 
+    def summarize_external_risk(self, external_risk: dict[str, Any] | None) -> dict[str, Any] | None:
+        if not external_risk:
+            return None
+        summary: dict[str, Any] = {
+            "provider": external_risk.get("provider"),
+            "operation": external_risk.get("operation"),
+            "status": external_risk.get("status"),
+        }
+        recommendation = external_risk.get("recommendation")
+        if isinstance(recommendation, dict):
+            summary["decision"] = recommendation.get("decision")
+            summary["reasons"] = list(recommendation.get("reasons", []))
+        checks = external_risk.get("checks")
+        if isinstance(checks, dict):
+            summarized_checks: dict[str, Any] = {}
+            for check_name, check in checks.items():
+                item: dict[str, Any] = {"status": check.get("status")}
+                check_recommendation = check.get("recommendation")
+                if isinstance(check_recommendation, dict):
+                    item["decision"] = check_recommendation.get("decision")
+                    item["reasons"] = list(check_recommendation.get("reasons", []))
+                result = check.get("result")
+                if isinstance(result, dict):
+                    if "overall_risk_level" in result:
+                        item["level"] = result.get("overall_risk_level")
+                    if "riskScore" in result:
+                        item["score"] = result.get("riskScore")
+                    if "is_ofac_sanctioned" in result:
+                        item["ofac"] = bool(result.get("is_ofac_sanctioned"))
+                    if "is_token_blacklisted" in result:
+                        item["blacklisted"] = bool(result.get("is_token_blacklisted"))
+                summarized_checks[check_name] = item
+            summary["checks"] = summarized_checks
+        return summary
+
     def merge_policy(
         self,
         *,
@@ -148,6 +183,7 @@ class FirewallService:
                 reasons=list(policy.reasons) + ["manual_review_rejected"],
                 rate_limit_remaining=policy.rate_limit_remaining,
             )
+        risk_summary = self.summarize_external_risk(external_risk)
         payment = {
             "network": pending.requirement.network,
             "asset_code": pending.requirement.asset_code,
@@ -165,6 +201,7 @@ class FirewallService:
             policy_decision=policy,
             payment_mode=proof.mode,
             payer=proof.payer,
+            risk_summary=risk_summary,
         )
         audit = self.audit_log.append(
             request_id=request_id,
@@ -172,6 +209,7 @@ class FirewallService:
             outcome="authorized" if policy.decision == "allow" else policy.decision,
             payment_reference=proof.payment_reference,
             policy_reasons=policy.reasons,
+            risk_summary=risk_summary,
         )
         if policy.decision != "allow":
             review_record = None

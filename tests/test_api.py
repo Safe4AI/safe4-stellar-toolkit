@@ -741,6 +741,11 @@ class Safe4StellarToolkitTests(unittest.TestCase):
                 self.assertEqual(reviewed.json()["external_risk"]["operation"], "wallet_bundle")
                 self.assertIn("range_address_score_6", reviewed.json()["policy"]["reasons"])
                 self.assertEqual(reviewed.json()["review"]["status"], "pending")
+                self.assertEqual(reviewed.json()["receipt"]["risk_summary"]["decision"], "review")
+                self.assertEqual(
+                    reviewed.json()["receipt"]["risk_summary"]["checks"]["recipient_address"]["score"],
+                    6,
+                )
 
     def test_review_approval_allows_same_paid_request_on_retry(self) -> None:
         payload = {
@@ -935,6 +940,19 @@ class Safe4StellarToolkitTests(unittest.TestCase):
                     denied.json()["external_risk"]["checks"]["sender_sanctions"]["recommendation"]["decision"],
                     "deny",
                 )
+                self.assertEqual(denied.json()["receipt"]["risk_summary"]["decision"], "deny")
+                self.assertTrue(denied.json()["receipt"]["risk_summary"]["checks"]["sender_sanctions"]["ofac"])
+
+                audit_entries = client.get("/audit/entries")
+                self.assertEqual(audit_entries.status_code, 200)
+                matching = [
+                    entry
+                    for entry in audit_entries.json()["entries"]
+                    if entry["request_id"] == challenge["request_id"]
+                ]
+                self.assertEqual(len(matching), 1)
+                self.assertEqual(matching[0]["risk_summary"]["decision"], "deny")
+                self.assertTrue(matching[0]["risk_summary"]["checks"]["sender_sanctions"]["ofac"])
 
     def test_wallet_aware_paid_call_allows_with_low_range_risk(self) -> None:
         payment_payload = {
@@ -976,4 +994,10 @@ class Safe4StellarToolkitTests(unittest.TestCase):
                 self.assertEqual(
                     authorized.json()["external_risk"]["recommendation"]["decision"],
                     "allow",
+                )
+                self.assertEqual(authorized.json()["receipt"]["risk_summary"]["decision"], "allow")
+                self.assertEqual(authorized.json()["audit"]["risk_summary"]["decision"], "allow")
+                self.assertEqual(
+                    authorized.json()["audit"]["risk_summary"]["checks"]["payment"]["level"],
+                    "low",
                 )
