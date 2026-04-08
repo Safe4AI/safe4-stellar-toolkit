@@ -123,7 +123,7 @@ class Safe4StellarToolkitTests(unittest.TestCase):
     def test_demo_page_and_audit_endpoint_exist(self) -> None:
         demo = self.client.get("/demo")
         self.assertEqual(demo.status_code, 200)
-        self.assertIn("Control every paid tool call before it executes.", demo.text)
+        self.assertIn("Paid AI tools, with policy at the edge.", demo.text)
         audit = self.client.get("/audit/entries")
         self.assertEqual(audit.status_code, 200)
         self.assertIn("entries", audit.json())
@@ -601,6 +601,51 @@ class Safe4StellarToolkitTests(unittest.TestCase):
                 self.assertEqual(response.json()["recommendation"]["decision"], "deny")
                 self.assertIn("range_ofac_sanctioned", response.json()["recommendation"]["reasons"])
 
+    def test_policy_preview_uses_wallet_bundle_checks(self) -> None:
+        payment_payload = {
+            "overall_risk_level": "low",
+            "risk_factors": [],
+            "processing_time_ms": 142.0,
+            "errors": [],
+            "request_summary": {},
+        }
+        sender_address_payload = {"riskScore": 1}
+        recipient_address_payload = {"riskScore": 6}
+        sanctions_payload = {
+            "is_token_blacklisted": False,
+            "is_ofac_sanctioned": False,
+            "matches": [],
+        }
+        with patch.dict(os.environ, {"SAFE4_RANGE_API_KEY": "range-demo-key"}, clear=False):
+            with patch(
+                "packages.policies.range.httpx.get",
+                side_effect=[
+                    FakeHttpResponse(payment_payload),
+                    FakeHttpResponse(sender_address_payload),
+                    FakeHttpResponse(recipient_address_payload),
+                    FakeHttpResponse(sanctions_payload),
+                    FakeHttpResponse(sanctions_payload),
+                ],
+            ):
+                client = TestClient(build_app())
+                evaluate = client.get(
+                    "/policies/evaluate",
+                    params={
+                        "tool_name": "summarise",
+                        "client_id": "wallet-agent",
+                        "amount": "0.500000",
+                        "risk_flag": "low",
+                        "sender_address": "GAAA111111111111111",
+                        "recipient_address": "GBBB222222222222222",
+                        "sender_network": "stellar",
+                        "recipient_network": "stellar",
+                    },
+                )
+                self.assertEqual(evaluate.status_code, 200)
+                self.assertEqual(evaluate.json()["range_risk"]["operation"], "wallet_bundle")
+                self.assertEqual(evaluate.json()["final_policy"]["decision"], "review")
+                self.assertIn("range_address_score_6", evaluate.json()["final_policy"]["reasons"])
+
     def test_wallet_aware_paid_call_reviews_when_range_not_configured(self) -> None:
         payload = {
             "client_id": "wallet-agent",
@@ -640,6 +685,62 @@ class Safe4StellarToolkitTests(unittest.TestCase):
         review_lookup = self.client.get(f"/reviews/{challenge['request_id']}")
         self.assertEqual(review_lookup.status_code, 200)
         self.assertEqual(review_lookup.json()["status"], "pending")
+
+    def test_wallet_aware_paid_call_reviews_on_range_address_signal(self) -> None:
+        payment_payload = {
+            "overall_risk_level": "low",
+            "risk_factors": [],
+            "processing_time_ms": 120.0,
+            "errors": [],
+            "request_summary": {},
+        }
+        sender_address_payload = {"riskScore": 1}
+        recipient_address_payload = {"riskScore": 6}
+        sanctions_payload = {
+            "is_token_blacklisted": False,
+            "is_ofac_sanctioned": False,
+            "matches": [],
+        }
+        payload = {
+            "client_id": "wallet-agent",
+            "text": "Recipient address risk should trigger a held review instead of silent execution.",
+            "max_sentences": 1,
+            "risk_flag": "low",
+            "sender_address": "GAAA111111111111111",
+            "recipient_address": "GBBB222222222222222",
+        }
+        with patch.dict(os.environ, {"SAFE4_RANGE_API_KEY": "range-demo-key"}, clear=False):
+            with patch(
+                "packages.policies.range.httpx.get",
+                side_effect=[
+                    FakeHttpResponse(payment_payload),
+                    FakeHttpResponse(sender_address_payload),
+                    FakeHttpResponse(recipient_address_payload),
+                    FakeHttpResponse(sanctions_payload),
+                    FakeHttpResponse(sanctions_payload),
+                ],
+            ):
+                client = TestClient(build_app())
+                first = client.post("/tools/summarise", json=payload)
+                challenge = first.json()
+                settle = client.post(
+                    "/payments/mock/settle",
+                    json={"request_id": challenge["request_id"], "payer": "GAAA111111111111111"},
+                )
+                token = settle.json()["payment_token"]
+                reviewed = client.post(
+                    "/tools/summarise",
+                    json=payload,
+                    headers={
+                        "Authorization": f"Payment {token}",
+                        "X-Request-Id": challenge["request_id"],
+                    },
+                )
+                self.assertEqual(reviewed.status_code, 409)
+                self.assertEqual(reviewed.json()["policy"]["decision"], "review")
+                self.assertEqual(reviewed.json()["external_risk"]["operation"], "wallet_bundle")
+                self.assertIn("range_address_score_6", reviewed.json()["policy"]["reasons"])
+                self.assertEqual(reviewed.json()["review"]["status"], "pending")
 
     def test_review_approval_allows_same_paid_request_on_retry(self) -> None:
         payload = {
@@ -771,6 +872,69 @@ class Safe4StellarToolkitTests(unittest.TestCase):
                 self.assertEqual(denied.json()["policy"]["decision"], "deny")
                 self.assertIn("range_payment_risk_high", denied.json()["policy"]["reasons"])
                 self.assertEqual(denied.json()["external_risk"]["status"], "ok")
+
+    def test_wallet_aware_paid_call_denies_on_range_sanctions_hit(self) -> None:
+        payment_payload = {
+            "overall_risk_level": "low",
+            "risk_factors": [],
+            "processing_time_ms": 210.0,
+            "errors": [],
+            "request_summary": {},
+        }
+        sender_address_payload = {"riskScore": 2}
+        recipient_address_payload = {"riskScore": 1}
+        sender_sanctions_payload = {
+            "is_token_blacklisted": False,
+            "is_ofac_sanctioned": True,
+            "matches": [],
+        }
+        recipient_sanctions_payload = {
+            "is_token_blacklisted": False,
+            "is_ofac_sanctioned": False,
+            "matches": [],
+        }
+        payload = {
+            "client_id": "wallet-agent",
+            "text": "Sanctioned counterparties should be denied even when the payment proof is valid.",
+            "max_sentences": 1,
+            "risk_flag": "low",
+            "sender_address": "GAAA111111111111111",
+            "recipient_address": "GBBB222222222222222",
+        }
+        with patch.dict(os.environ, {"SAFE4_RANGE_API_KEY": "range-demo-key"}, clear=False):
+            with patch(
+                "packages.policies.range.httpx.get",
+                side_effect=[
+                    FakeHttpResponse(payment_payload),
+                    FakeHttpResponse(sender_address_payload),
+                    FakeHttpResponse(recipient_address_payload),
+                    FakeHttpResponse(sender_sanctions_payload),
+                    FakeHttpResponse(recipient_sanctions_payload),
+                ],
+            ):
+                client = TestClient(build_app())
+                first = client.post("/tools/summarise", json=payload)
+                challenge = first.json()
+                settle = client.post(
+                    "/payments/mock/settle",
+                    json={"request_id": challenge["request_id"], "payer": "GAAA111111111111111"},
+                )
+                token = settle.json()["payment_token"]
+                denied = client.post(
+                    "/tools/summarise",
+                    json=payload,
+                    headers={
+                        "Authorization": f"Payment {token}",
+                        "X-Request-Id": challenge["request_id"],
+                    },
+                )
+                self.assertEqual(denied.status_code, 403)
+                self.assertEqual(denied.json()["policy"]["decision"], "deny")
+                self.assertIn("range_ofac_sanctioned", denied.json()["policy"]["reasons"])
+                self.assertEqual(
+                    denied.json()["external_risk"]["checks"]["sender_sanctions"]["recommendation"]["decision"],
+                    "deny",
+                )
 
     def test_wallet_aware_paid_call_allows_with_low_range_risk(self) -> None:
         payment_payload = {

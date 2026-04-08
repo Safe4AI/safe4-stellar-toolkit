@@ -132,25 +132,49 @@ def build_app() -> FastAPI:
 
     def _final_policy_preview(
         *,
-        local_decision: str,
-        local_reasons: list[str],
-        range_recommendation: dict[str, Any] | None,
-        range_status: str,
+        local_policy: PolicyDecision,
+        external_policy: PolicyDecision | None,
+        external_risk: dict[str, Any] | None,
     ) -> dict[str, Any]:
-        reasons = list(local_reasons)
-        if range_recommendation is not None:
-            reasons.extend(range_recommendation.get("reasons", []))
-        decision = local_decision
+        reasons = list(local_policy.reasons)
+        if external_policy is not None:
+            reasons.extend(external_policy.reasons)
+        decision = local_policy.decision
+        range_status = (external_risk or {}).get("status")
         if decision != "deny":
-            if range_recommendation is not None and range_recommendation.get("decision") == "deny":
-                decision = "deny"
-            elif range_recommendation is not None and range_recommendation.get("decision") == "review":
-                decision = "review"
-            elif range_status == "error":
+            if external_policy is not None and range_status != "not_configured":
+                if external_policy.decision == "deny":
+                    decision = "deny"
+                elif external_policy.decision == "review":
+                    decision = "review"
+            elif range_status in {"error", "partial_error"}:
                 decision = "review"
         return {"decision": decision, "reasons": reasons}
 
-    def _evaluate_range_for_payload(*, payload: dict[str, Any], amount: Decimal) -> tuple[PolicyDecision | None, dict[str, Any] | None]:
+    def _combine_range_recommendations(checks: dict[str, dict[str, Any]]) -> dict[str, Any]:
+        reasons: list[str] = []
+        has_review = False
+        has_error = False
+        for check in checks.values():
+            recommendation = check.get("recommendation") or {}
+            reasons.extend(recommendation.get("reasons", []))
+            if check.get("status") == "error":
+                has_error = True
+            if recommendation.get("decision") == "deny":
+                return {"decision": "deny", "reasons": reasons}
+            if recommendation.get("decision") == "review":
+                has_review = True
+        if has_error:
+            return {"decision": "review", "reasons": reasons}
+        if has_review:
+            return {"decision": "review", "reasons": reasons}
+        return {"decision": "allow", "reasons": reasons or ["range_wallet_bundle_clear"]}
+
+    def _evaluate_range_wallet_bundle(
+        *,
+        payload: dict[str, Any],
+        amount: Decimal,
+    ) -> tuple[PolicyDecision | None, dict[str, Any] | None]:
         sender_address = payload.get("sender_address")
         recipient_address = payload.get("recipient_address")
         if not sender_address or not recipient_address:
@@ -159,44 +183,107 @@ def build_app() -> FastAPI:
             return PolicyDecision(decision="review", reasons=["range_not_configured_for_wallet_risk"]), {
                 "status": "not_configured",
                 "provider": "range_risk",
-                "operation": "payment",
+                "operation": "wallet_bundle",
                 "configured": False,
                 "reason": "Wallet-aware request supplied sender/recipient addresses but Range is not configured.",
             }
-        try:
-            result = range_risk.payment_risk(
+
+        sender_network = payload.get("sender_network") or "stellar"
+        recipient_network = payload.get("recipient_network") or "stellar"
+        checks: dict[str, dict[str, Any]] = {}
+
+        def add_check(
+            *,
+            name: str,
+            operation: str,
+            loader,
+            recommender,
+            unavailable_reason: str,
+        ) -> None:
+            try:
+                result = loader()
+                checks[name] = {
+                    "status": "ok",
+                    "operation": operation,
+                    "result": result,
+                    "recommendation": recommender(result),
+                }
+            except Exception as exc:
+                checks[name] = {
+                    "status": "error",
+                    "operation": operation,
+                    "error": str(exc),
+                    "recommendation": {"decision": "review", "reasons": [unavailable_reason]},
+                }
+
+        add_check(
+            name="payment",
+            operation="payment",
+            loader=lambda: range_risk.payment_risk(
                 sender_address=sender_address,
                 recipient_address=recipient_address,
                 amount=amount,
-                sender_network=payload.get("sender_network") or "stellar",
-                recipient_network=payload.get("recipient_network") or "stellar",
+                sender_network=sender_network,
+                recipient_network=recipient_network,
                 sender_token=payload.get("sender_token"),
                 recipient_token=payload.get("recipient_token"),
                 timestamp=payload.get("payment_timestamp"),
-            )
-            recommendation = range_risk.recommend_payment_action(result)
-            return (
-                PolicyDecision(decision=recommendation["decision"], reasons=recommendation["reasons"]),
-                {
-                    "status": "ok",
-                    "provider": "range_risk",
-                    "operation": "payment",
-                    "configured": True,
-                    "result": result,
-                    "recommendation": recommendation,
-                },
-            )
-        except Exception as exc:
-            return (
-                PolicyDecision(decision="review", reasons=["range_payment_risk_unavailable"]),
-                {
-                    "status": "error",
-                    "provider": "range_risk",
-                    "operation": "payment",
-                    "configured": True,
-                    "error": str(exc),
-                },
-            )
+            ),
+            recommender=range_risk.recommend_payment_action,
+            unavailable_reason="range_payment_risk_unavailable",
+        )
+        add_check(
+            name="sender_address",
+            operation="address",
+            loader=lambda: range_risk.address_risk(address=sender_address, network=sender_network),
+            recommender=range_risk.recommend_address_action,
+            unavailable_reason="range_sender_address_risk_unavailable",
+        )
+        add_check(
+            name="recipient_address",
+            operation="address",
+            loader=lambda: range_risk.address_risk(address=recipient_address, network=recipient_network),
+            recommender=range_risk.recommend_address_action,
+            unavailable_reason="range_recipient_address_risk_unavailable",
+        )
+        add_check(
+            name="sender_sanctions",
+            operation="sanctions",
+            loader=lambda: range_risk.sanctions(address=sender_address, network=sender_network),
+            recommender=range_risk.recommend_sanctions_action,
+            unavailable_reason="range_sender_sanctions_unavailable",
+        )
+        add_check(
+            name="recipient_sanctions",
+            operation="sanctions",
+            loader=lambda: range_risk.sanctions(address=recipient_address, network=recipient_network),
+            recommender=range_risk.recommend_sanctions_action,
+            unavailable_reason="range_recipient_sanctions_unavailable",
+        )
+
+        recommendation = _combine_range_recommendations(checks)
+        statuses = {check["status"] for check in checks.values()}
+        if statuses == {"error"}:
+            status = "error"
+        elif "error" in statuses:
+            status = "partial_error"
+        else:
+            status = "ok"
+
+        return (
+            PolicyDecision(decision=recommendation["decision"], reasons=recommendation["reasons"]),
+            {
+                "status": status,
+                "provider": "range_risk",
+                "operation": "wallet_bundle",
+                "configured": True,
+                "checks": checks,
+                "recommendation": recommendation,
+            },
+        )
+
+    def _evaluate_range_for_payload(*, payload: dict[str, Any], amount: Decimal) -> tuple[PolicyDecision | None, dict[str, Any] | None]:
+        return _evaluate_range_wallet_bundle(payload=payload, amount=amount)
 
     def _payment_token_from_headers(authorization: str | None, payment_signature: str | None) -> str | None:
         token = None
@@ -379,8 +466,8 @@ def build_app() -> FastAPI:
             },
             "notes": [
                 "The live paid-tool flow always enforces local policy in the main authorization path.",
-                "When wallet-aware requests include sender and recipient addresses, Range can now influence the live paid retry path.",
-                "The next production step is to add a first-class manual review queue rather than returning review_required inline.",
+                "Wallet-aware requests can now combine Range payment, address, and sanctions signals before tool release.",
+                "Review decisions are persisted and can be approved or rejected on the same request_id.",
             ],
         }
 
@@ -405,43 +492,22 @@ def build_app() -> FastAPI:
             risk_flag=risk_flag,
             consume_rate_limit=False,
         )
-        range_status = "skipped"
-        range_payload: dict[str, Any] | None = None
-        recommendation: dict[str, Any] | None = None
-        if sender_address and recipient_address:
-            if not range_risk.config.enabled:
-                range_status = "not_configured"
-                range_payload = _range_not_configured(operation="payment")
-            else:
-                try:
-                    result = range_risk.payment_risk(
-                        sender_address=sender_address,
-                        recipient_address=recipient_address,
-                        amount=amount,
-                        sender_network=sender_network,
-                        recipient_network=recipient_network,
-                        sender_token=sender_token,
-                        recipient_token=recipient_token,
-                        timestamp=timestamp,
-                    )
-                    recommendation = range_risk.recommend_payment_action(result)
-                    range_status = "ok"
-                    range_payload = {
-                        "status": "ok",
-                        "provider": "range_risk",
-                        "operation": "payment",
-                        "configured": True,
-                        "result": result,
-                        "recommendation": recommendation,
-                    }
-                except Exception as exc:
-                    range_status = "error"
-                    range_payload = _range_error(operation="payment", exc=exc)
+        external_policy, range_payload = _evaluate_range_for_payload(
+            payload={
+                "sender_address": sender_address,
+                "recipient_address": recipient_address,
+                "sender_network": sender_network,
+                "recipient_network": recipient_network,
+                "sender_token": sender_token,
+                "recipient_token": recipient_token,
+                "payment_timestamp": timestamp,
+            },
+            amount=amount,
+        )
         final_policy = _final_policy_preview(
-            local_decision=local.decision,
-            local_reasons=local.reasons,
-            range_recommendation=recommendation,
-            range_status=range_status,
+            local_policy=local,
+            external_policy=external_policy,
+            external_risk=range_payload,
         )
         return {
             "status": "evaluated",
@@ -456,8 +522,7 @@ def build_app() -> FastAPI:
                 "recipient_network": recipient_network,
             },
             "local_policy": local.model_dump(mode="json"),
-            "range_risk": range_payload
-            or {
+            "range_risk": range_payload or {
                 "status": "skipped",
                 "reason": "Provide sender_address and recipient_address to evaluate payment risk.",
             },

@@ -6,57 +6,59 @@
   <title>Safe4 Stellar Toolkit</title>
   <style>
     :root {
-      --bg: #060708;
-      --bg-soft: #0d1112;
-      --panel: rgba(15, 20, 23, 0.86);
-      --panel-strong: rgba(19, 26, 30, 0.94);
-      --line: rgba(181, 202, 188, 0.18);
-      --line-strong: rgba(214, 228, 220, 0.26);
+      --bg: #050607;
+      --bg-soft: #0a0d0f;
+      --panel: rgba(12, 16, 19, 0.86);
+      --panel-strong: rgba(17, 22, 26, 0.95);
+      --line: rgba(186, 207, 194, 0.14);
+      --line-strong: rgba(214, 228, 220, 0.22);
       --text: #f4efe6;
-      --muted: #a7b2ad;
+      --muted: #97a39c;
       --accent: #9ed7b4;
-      --accent-strong: #d7f7e2;
-      --warning: #f5c47f;
-      --danger: #f08a86;
-      --shadow: 0 32px 90px rgba(0, 0, 0, 0.42);
+      --accent-strong: #e0f6e8;
+      --warning: #f0c47a;
+      --danger: #ef8d87;
+      --success: #8ed0a5;
+      --shadow: 0 30px 80px rgba(0, 0, 0, 0.42);
     }
 
     * { box-sizing: border-box; }
     html, body { margin: 0; min-height: 100%; }
     body {
       font-family: "Inter", "Segoe UI", sans-serif;
-      background:
-        radial-gradient(circle at top left, rgba(102, 160, 125, 0.15), transparent 32%),
-        radial-gradient(circle at top right, rgba(214, 228, 220, 0.08), transparent 28%),
-        linear-gradient(180deg, #050607 0%, #0b0f10 100%);
       color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(102, 160, 125, 0.14), transparent 30%),
+        radial-gradient(circle at top right, rgba(214, 228, 220, 0.08), transparent 24%),
+        linear-gradient(180deg, #050607 0%, #0b0f10 100%);
     }
 
     a { color: inherit; }
     code {
       font-family: "JetBrains Mono", "Consolas", monospace;
-      background: rgba(255, 255, 255, 0.06);
-      border: 1px solid rgba(255, 255, 255, 0.08);
+      font-size: 0.88rem;
+      padding: 0.15rem 0.38rem;
       border-radius: 8px;
-      padding: 0.15rem 0.4rem;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.05);
     }
 
     .shell {
-      max-width: 1240px;
+      max-width: 1260px;
       margin: 0 auto;
-      padding: 24px 18px 72px;
+      padding: 24px 18px 64px;
     }
 
-    .nav {
+    .topbar {
       display: flex;
       justify-content: space-between;
       align-items: center;
       gap: 1rem;
-      margin-bottom: 40px;
+      margin-bottom: 26px;
       color: var(--muted);
+      font-size: 0.78rem;
       text-transform: uppercase;
       letter-spacing: 0.16em;
-      font-size: 0.72rem;
     }
 
     .brand {
@@ -70,20 +72,19 @@
       width: 38px;
       height: 38px;
       border-radius: 50%;
-      border: 1px solid var(--line-strong);
       display: inline-flex;
       align-items: center;
       justify-content: center;
+      border: 1px solid var(--line-strong);
       color: var(--accent-strong);
-      box-shadow: inset 0 0 24px rgba(158, 215, 180, 0.08);
+      box-shadow: inset 0 0 20px rgba(158, 215, 180, 0.08);
     }
 
     .hero {
       display: grid;
-      grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.95fr);
-      gap: 24px;
-      align-items: stretch;
-      margin-bottom: 24px;
+      grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.9fr);
+      gap: 20px;
+      margin-bottom: 20px;
     }
 
     .panel {
@@ -91,144 +92,168 @@
       overflow: hidden;
       background: var(--panel);
       border: 1px solid var(--line);
-      border-radius: 26px;
-      padding: 24px;
+      border-radius: 24px;
+      padding: 22px;
       box-shadow: var(--shadow);
-      backdrop-filter: blur(14px);
+      backdrop-filter: blur(16px);
     }
 
     .panel::after {
       content: "";
       position: absolute;
-      inset: auto -12% 0 auto;
-      width: 38%;
+      inset: auto -10% 0 auto;
+      width: 34%;
       height: 1px;
-      background: linear-gradient(90deg, transparent, rgba(158, 215, 180, 0.55), transparent);
-      opacity: 0.5;
+      background: linear-gradient(90deg, transparent, rgba(158, 215, 180, 0.48), transparent);
+      opacity: 0.55;
     }
 
-    .kicker {
+    .kicker,
+    .eyebrow {
       display: inline-flex;
       align-items: center;
-      gap: 0.5rem;
-      padding: 0.38rem 0.7rem;
+      gap: 0.45rem;
+      padding: 0.35rem 0.68rem;
       border-radius: 999px;
-      border: 1px solid rgba(158, 215, 180, 0.18);
-      color: var(--accent-strong);
+      border: 1px solid rgba(158, 215, 180, 0.16);
       background: rgba(158, 215, 180, 0.08);
+      color: var(--accent-strong);
+      font-size: 0.72rem;
       text-transform: uppercase;
       letter-spacing: 0.14em;
-      font-size: 0.72rem;
-      margin-bottom: 18px;
+      margin-bottom: 16px;
     }
 
     h1, h2, h3 {
       font-family: Georgia, "Times New Roman", serif;
-      margin: 0 0 14px;
+      margin: 0 0 12px;
       font-weight: 500;
       letter-spacing: -0.02em;
-      line-height: 1.04;
+      line-height: 1.02;
     }
 
-    h1 { font-size: clamp(2.8rem, 6vw, 5.4rem); max-width: 11ch; }
-    h2 { font-size: clamp(1.55rem, 2.6vw, 2.15rem); }
-    h3 { font-size: 1.2rem; }
+    h1 { font-size: clamp(2.6rem, 5.8vw, 5rem); max-width: 11ch; }
+    h2 { font-size: clamp(1.4rem, 2.3vw, 2rem); }
+    h3 { font-size: 1.14rem; }
 
     p {
-      margin: 0 0 12px;
+      margin: 0;
       color: var(--muted);
-      line-height: 1.7;
-      font-size: 0.98rem;
+      line-height: 1.65;
+      font-size: 0.97rem;
     }
 
-    .hero-copy p:first-of-type {
-      color: rgba(244, 239, 230, 0.92);
-      font-size: 1.07rem;
+    .hero-copy p {
       max-width: 58ch;
+      color: rgba(244, 239, 230, 0.88);
     }
 
-    .hero-grid,
-    .status-grid,
-    .card-grid,
-    .tool-grid {
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .badges,
+    .tool-strip,
+    .stats-grid {
       display: grid;
-      gap: 16px;
+      gap: 14px;
     }
 
-    .hero-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: 28px; }
-    .status-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .card-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 24px 0; }
-    .tool-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); margin-bottom: 24px; }
+    .badges { grid-template-columns: repeat(4, minmax(0, 1fr)); margin-top: 22px; }
+    .tool-strip { grid-template-columns: repeat(3, minmax(0, 1fr)); margin-bottom: 20px; }
+    .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 
-    .metric,
-    .card,
+    .chip,
     .tool,
-    .mini {
+    .stat,
+    .review-card {
       background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
       border: 1px solid rgba(255,255,255,0.07);
-      border-radius: 20px;
-      padding: 18px;
+      border-radius: 18px;
+      padding: 16px;
     }
 
-    .metric-label,
-    .eyebrow {
+    .chip-label,
+    .tool-label,
+    .stat-label,
+    .micro-label {
+      color: var(--muted);
       text-transform: uppercase;
       letter-spacing: 0.13em;
-      font-size: 0.72rem;
-      color: var(--muted);
-      margin-bottom: 10px;
+      font-size: 0.7rem;
+      margin-bottom: 8px;
     }
 
-    .metric-value {
+    .chip-value,
+    .tool-price,
+    .stat-value {
       font-family: Georgia, "Times New Roman", serif;
-      font-size: 1.45rem;
+      font-size: 1.34rem;
       color: var(--text);
     }
 
-    .metric-note {
-      margin-top: 8px;
-      font-size: 0.88rem;
-      color: var(--muted);
-    }
+    .tool-price { color: var(--accent-strong); font-size: 1.42rem; margin-bottom: 8px; }
 
-    .tool-price {
-      font-family: Georgia, "Times New Roman", serif;
-      font-size: 1.55rem;
-      margin-bottom: 8px;
-      color: var(--accent-strong);
-    }
-
-    .split {
+    .workspace {
       display: grid;
-      grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
-      gap: 24px;
-      margin-bottom: 24px;
+      grid-template-columns: minmax(0, 1.1fr) minmax(340px, 0.9fr);
+      gap: 20px;
+      margin-bottom: 20px;
     }
+
+    .stack {
+      display: grid;
+      gap: 20px;
+    }
+
+    .field-row {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    label {
+      display: block;
+      font-size: 0.78rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      margin-bottom: 0.45rem;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(0, 0, 0, 0.18);
+      color: var(--text);
+      padding: 0.86rem 0.92rem;
+      font: inherit;
+    }
+
+    textarea { min-height: 126px; resize: vertical; }
 
     .actions {
       display: flex;
       flex-wrap: wrap;
       gap: 10px;
-      margin: 18px 0 20px;
+      margin: 16px 0 20px;
     }
 
     button {
       appearance: none;
-      border: 1px solid rgba(255,255,255,0.09);
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.1);
       background: rgba(255,255,255,0.03);
       color: var(--text);
-      padding: 0.92rem 1.2rem;
-      border-radius: 999px;
-      cursor: pointer;
+      padding: 0.88rem 1.15rem;
       font-weight: 600;
-      letter-spacing: 0.01em;
+      cursor: pointer;
       transition: transform 120ms ease, border-color 120ms ease, background 120ms ease;
-    }
-
-    button.primary {
-      background: linear-gradient(180deg, rgba(158, 215, 180, 0.22), rgba(158, 215, 180, 0.11));
-      border-color: rgba(158, 215, 180, 0.28);
-      color: var(--accent-strong);
     }
 
     button:hover {
@@ -236,117 +261,139 @@
       border-color: rgba(255,255,255,0.18);
     }
 
-    .field-row {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 14px;
-      margin-bottom: 18px;
+    button.primary {
+      background: linear-gradient(180deg, rgba(158, 215, 180, 0.22), rgba(158, 215, 180, 0.12));
+      border-color: rgba(158, 215, 180, 0.28);
+      color: var(--accent-strong);
     }
 
-    label {
-      display: block;
-      font-size: 0.82rem;
-      color: var(--muted);
-      margin-bottom: 0.45rem;
-      text-transform: uppercase;
-      letter-spacing: 0.12em;
+    button.ghost {
+      padding-left: 0.9rem;
+      padding-right: 0.9rem;
     }
 
-    input, select, textarea {
-      width: 100%;
-      background: rgba(0,0,0,0.18);
-      color: var(--text);
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 14px;
-      padding: 0.9rem 0.95rem;
-      font: inherit;
-    }
-
-    textarea { min-height: 132px; resize: vertical; }
-
-    .signal-line {
+    .line {
       display: flex;
       justify-content: space-between;
+      align-items: flex-start;
       gap: 1rem;
-      padding: 0.85rem 0;
+      padding: 0.8rem 0;
       border-bottom: 1px solid rgba(255,255,255,0.07);
     }
 
-    .signal-line:last-child { border-bottom: 0; padding-bottom: 0; }
+    .line:last-child { border-bottom: 0; padding-bottom: 0; }
 
-    .signal-key {
+    .line-key {
       color: var(--muted);
-      font-size: 0.88rem;
       text-transform: uppercase;
       letter-spacing: 0.12em;
+      font-size: 0.74rem;
     }
 
-    .signal-value {
-      font-family: "JetBrains Mono", "Consolas", monospace;
+    .line-value {
+      max-width: 65%;
       text-align: right;
-      font-size: 0.9rem;
+      font-family: "JetBrains Mono", "Consolas", monospace;
+      font-size: 0.88rem;
       word-break: break-word;
     }
 
-    .live-strip {
+    .review-head {
       display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-top: 10px;
-    }
-
-    .pill {
-      display: inline-flex;
+      justify-content: space-between;
       align-items: center;
-      gap: 0.5rem;
-      padding: 0.45rem 0.7rem;
-      border-radius: 999px;
-      border: 1px solid rgba(255,255,255,0.08);
-      background: rgba(255,255,255,0.03);
-      color: var(--muted);
-      font-size: 0.82rem;
+      gap: 1rem;
+      margin-bottom: 16px;
     }
 
-    .pill strong { color: var(--text); }
+    .review-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .review-card {
+      display: grid;
+      gap: 10px;
+    }
+
+    .review-title {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      align-items: center;
+      font-weight: 600;
+    }
+
+    .review-status {
+      font-size: 0.76rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent-strong);
+    }
+
+    .review-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .review-note {
+      color: var(--muted);
+      font-size: 0.88rem;
+      line-height: 1.5;
+    }
+
+    .empty {
+      border: 1px dashed rgba(255,255,255,0.08);
+      border-radius: 18px;
+      padding: 18px;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    .status-ok { color: var(--success); }
+    .status-review { color: var(--warning); }
+    .status-deny { color: var(--danger); }
 
     pre {
       margin: 0;
-      min-height: 320px;
-      max-height: 540px;
+      min-height: 260px;
+      max-height: 520px;
       overflow: auto;
       border-radius: 20px;
       border: 1px solid rgba(255,255,255,0.08);
-      padding: 18px;
       background: linear-gradient(180deg, rgba(5, 8, 10, 0.88), rgba(11, 16, 18, 0.94));
+      padding: 18px;
       color: #dce6df;
       font-family: "JetBrains Mono", "Consolas", monospace;
+      font-size: 0.86rem;
       line-height: 1.55;
-      font-size: 0.87rem;
     }
 
-    .subdued { color: var(--muted); }
-    .accent { color: var(--accent-strong); }
-    .warning { color: var(--warning); }
-    .danger { color: var(--danger); }
-
-    @media (max-width: 980px) {
+    @media (max-width: 1020px) {
       .hero,
-      .split,
-      .tool-grid,
-      .card-grid,
-      .hero-grid,
-      .status-grid,
+      .workspace,
+      .tool-strip,
+      .badges,
+      .stats-grid,
       .field-row {
         grid-template-columns: 1fr;
       }
 
-      .shell { padding-left: 14px; padding-right: 14px; }
+      .line {
+        flex-direction: column;
+      }
+
+      .line-value {
+        max-width: 100%;
+        text-align: left;
+      }
     }
   </style>
 </head>
 <body>
   <main class="shell">
-    <header class="nav">
+    <header class="topbar">
       <div class="brand">
         <span class="brand-mark">S4</span>
         <span>Safe4 Stellar Toolkit</span>
@@ -357,121 +404,89 @@
     <section class="hero">
       <article class="panel hero-copy">
         <div class="kicker">Agent payment firewall</div>
-        <h1>Control every paid tool call before it executes.</h1>
-        <p>Safe4 sits between an AI agent and a monetised tool. The server issues a payment challenge, verifies payment context, applies local policy, surfaces external risk, and only then releases the result with a receipt and audit trail.</p>
-        <p>This demo shows the shape a real agent payment control plane should have on Stellar: payment-aware, policy-aware, and receipt-backed by default.</p>
+        <h1>Paid AI tools, with policy at the edge.</h1>
+        <p>Issue a payment challenge, attach proof, screen the wallet context, and release or hold the tool call with a receipt and audit trail.</p>
 
-        <div class="hero-grid">
-          <div class="metric">
-            <div class="metric-label">Primary proof path</div>
-            <div class="metric-value" id="metricMode">Loading</div>
-            <div class="metric-note">The strongest live execution route currently deployed.</div>
+        <div class="hero-actions">
+          <button id="previewPolicyHero" class="primary">Preview policy</button>
+          <button id="refreshReviewsHero" class="ghost">Refresh reviews</button>
+        </div>
+
+        <div class="badges">
+          <div class="chip">
+            <div class="chip-label">Live mode</div>
+            <div class="chip-value" id="metricMode">Loading</div>
           </div>
-          <div class="metric">
-            <div class="metric-label">Network</div>
-            <div class="metric-value" id="metricNetwork">Loading</div>
-            <div class="metric-note">Current chain context for challenge construction and proof verification.</div>
+          <div class="chip">
+            <div class="chip-label">Network</div>
+            <div class="chip-value" id="metricNetwork">Loading</div>
           </div>
-          <div class="metric">
-            <div class="metric-label">Policy fabric</div>
-            <div class="metric-value" id="metricPolicy">Local + optional risk</div>
-            <div class="metric-note">Explicit spend caps, rate limits, and external Range screening.</div>
+          <div class="chip">
+            <div class="chip-label">Asset</div>
+            <div class="chip-value" id="metricAsset">Loading</div>
+          </div>
+          <div class="chip">
+            <div class="chip-label">Review queue</div>
+            <div class="chip-value" id="metricReviews">0</div>
           </div>
         </div>
       </article>
 
       <aside class="panel">
-        <div class="eyebrow">Live platform posture</div>
-        <h2>What the runtime is enforcing right now</h2>
-        <div class="status-grid">
-          <div class="mini">
-            <div class="metric-label">x402</div>
-            <div class="metric-value" id="x402State">Loading</div>
-            <div class="metric-note">Wire-level preview plus facilitator inspection.</div>
+        <div class="eyebrow">Protocol posture</div>
+        <h2>Live runtime view</h2>
+        <div class="stats-grid">
+          <div class="stat">
+            <div class="stat-label">x402</div>
+            <div class="stat-value" id="x402State">Loading</div>
           </div>
-          <div class="mini">
-            <div class="metric-label">MPP Charge</div>
-            <div class="metric-value" id="mppState">Loading</div>
-            <div class="metric-note">Public challenge surface and sidecar inspection.</div>
+          <div class="stat">
+            <div class="stat-label">MPP Charge</div>
+            <div class="stat-value" id="mppState">Loading</div>
           </div>
-          <div class="mini">
-            <div class="metric-label">Range risk</div>
-            <div class="metric-value" id="rangeState">Loading</div>
-            <div class="metric-note">Optional provider-backed address, payment, and sanctions screening.</div>
+          <div class="stat">
+            <div class="stat-label">Range</div>
+            <div class="stat-value" id="rangeState">Loading</div>
           </div>
-          <div class="mini">
-            <div class="metric-label">Audit</div>
-            <div class="metric-value">Append-only</div>
-            <div class="metric-note">Every decision path returns a receipt and audit reference.</div>
+          <div class="stat">
+            <div class="stat-label">Audit</div>
+            <div class="stat-value">Append-only</div>
           </div>
-        </div>
-
-        <div class="live-strip">
-          <span class="pill"><strong id="healthPill">Checking</strong> runtime health</span>
-          <span class="pill"><strong id="assetPill">Loading</strong> payment asset</span>
-          <span class="pill"><strong id="facilitatorPill">Loading</strong> x402 facilitator</span>
-          <span class="pill"><strong id="rateLimitPill">Loading</strong> rate limit window</span>
         </div>
       </aside>
     </section>
 
-    <section class="tool-grid">
+    <section class="tool-strip">
       <article class="panel tool">
-        <div class="eyebrow">Tool 01</div>
+        <div class="tool-label">Tool 01</div>
         <h3>/tools/summarise</h3>
         <div class="tool-price">0.500000 XLM</div>
-        <p>Turns unbounded text into a bounded result, but only after the request is bound to a paid challenge and policy evaluation.</p>
+        <p>Bounded output behind payment proof and policy.</p>
       </article>
       <article class="panel tool">
-        <div class="eyebrow">Tool 02</div>
+        <div class="tool-label">Tool 02</div>
         <h3>/tools/fetch-url</h3>
         <div class="tool-price">0.750000 XLM</div>
-        <p>Shows the pattern for safe API monetisation: the tool is available, but execution still sits behind proof and policy.</p>
+        <p>Metadata-only fetch pattern for paid APIs.</p>
       </article>
       <article class="panel tool">
-        <div class="eyebrow">Tool 03</div>
+        <div class="tool-label">Tool 03</div>
         <h3>/tools/risk-check</h3>
         <div class="tool-price">1.250000 XLM</div>
-        <p>Demonstrates how Safe4 can combine local controls with external signals, including Range-backed wallet and payment screening.</p>
+        <p>Combines local rules with optional wallet screening.</p>
       </article>
     </section>
 
-    <section class="card-grid">
-      <article class="panel card">
-        <div class="eyebrow">Request binding</div>
-        <h3>Payment is tied to a specific request.</h3>
-        <p>The server binds the tool name, payload, memo, amount, and request ID together so a payment proof cannot be replayed onto a different call.</p>
-      </article>
-      <article class="panel card">
-        <div class="eyebrow">Policy management</div>
-        <h3>Policy is visible, not hidden.</h3>
-        <p>Spend caps, rate limits, tool denies, and external risk recommendations are exposed through explicit endpoints so teams can inspect what the system would do before they trust it.</p>
-      </article>
-      <article class="panel card">
-        <div class="eyebrow">Receipts and audit</div>
-        <h3>Execution returns evidence.</h3>
-        <p>Authorized results include payment references, policy decisions, timestamps, and audit records so the tool call is defensible after the fact.</p>
-      </article>
-    </section>
-
-    <section class="split">
+    <section class="workspace">
       <article class="panel">
-        <div class="eyebrow">Interactive flow</div>
-        <h2>Run the paid tool sequence</h2>
-        <p class="subdued">The UI adapts to the active verification mode. In <code>mock</code> it can mint a local payment token. In <code>transaction_hash</code> it expects a real Stellar tx hash. In preview modes it shows the required headers and guide endpoints.</p>
+        <div class="eyebrow">Execution console</div>
+        <h2>Run the flow</h2>
 
         <div class="field-row">
           <div>
             <label for="clientId">Client ID</label>
             <input id="clientId" value="demo-agent">
           </div>
-          <div>
-            <label for="maxSentences">Max sentences</label>
-            <input id="maxSentences" type="number" value="2" min="1" max="5">
-          </div>
-        </div>
-
-        <div class="field-row">
           <div>
             <label for="riskFlag">Risk flag</label>
             <select id="riskFlag">
@@ -480,19 +495,15 @@
               <option value="high">high</option>
             </select>
           </div>
-          <div>
-            <label for="payer">Payer</label>
-            <input id="payer" value="GDEMO_PAYER_ACCOUNT">
-          </div>
         </div>
 
         <div class="field-row">
           <div>
-            <label for="recipient">Recipient context</label>
-            <input id="recipient" value="GSAFE4XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX">
+            <label for="maxSentences">Max sentences</label>
+            <input id="maxSentences" type="number" min="1" max="5" value="2">
           </div>
           <div>
-            <label for="walletToggle">Wallet-aware policy</label>
+            <label for="walletToggle">Wallet-aware screening</label>
             <select id="walletToggle">
               <option value="off" selected>off</option>
               <option value="on">on</option>
@@ -500,10 +511,21 @@
           </div>
         </div>
 
+        <div class="field-row">
+          <div>
+            <label for="payer">Sender / payer</label>
+            <input id="payer" value="GDEMO_PAYER_ACCOUNT">
+          </div>
+          <div>
+            <label for="recipient">Recipient context</label>
+            <input id="recipient" value="GSAFE4XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX">
+          </div>
+        </div>
+
         <div id="txHashWrap" class="field-row" style="display: none;">
           <div>
             <label for="txHash">Transaction hash</label>
-            <input id="txHash" placeholder="Paste a Stellar tx hash for transaction_hash mode">
+            <input id="txHash" placeholder="Paste a Stellar tx hash">
           </div>
           <div>
             <label for="paymentReference">Payment reference override</label>
@@ -513,72 +535,83 @@
 
         <div>
           <label for="text">Tool payload</label>
-          <textarea id="text">Safe4 stands between an AI agent decision and payment execution. It requires payment proof, enforces policy, and returns a receipt-backed result.</textarea>
+          <textarea id="text">Safe4 stands between an AI agent decision and payment execution. It requires proof, enforces policy, and returns a receipt-backed result.</textarea>
         </div>
 
         <div class="actions">
           <button id="challenge" class="primary">1. Request challenge</button>
           <button id="settle">2. Create proof</button>
-          <button id="retry">3. Retry with payment</button>
+          <button id="retry">3. Retry paid call</button>
           <button id="previewPolicy">Preview policy</button>
         </div>
 
-        <div class="signal-line">
-          <span class="signal-key">Verification mode</span>
-          <span class="signal-value" id="flowMode">Loading</span>
+        <div class="line">
+          <span class="line-key">Verification mode</span>
+          <span class="line-value" id="flowMode">Loading</span>
         </div>
-        <div class="signal-line">
-          <span class="signal-key">Request ID</span>
-          <span class="signal-value" id="requestIdLine">Not started</span>
+        <div class="line">
+          <span class="line-key">Request ID</span>
+          <span class="line-value" id="requestIdLine">Not started</span>
         </div>
-        <div class="signal-line">
-          <span class="signal-key">Expected settle endpoint</span>
-          <span class="signal-value" id="settleEndpointLine">Not started</span>
+        <div class="line">
+          <span class="line-key">Proof endpoint</span>
+          <span class="line-value" id="settleEndpointLine">Waiting for challenge</span>
         </div>
-        <div class="signal-line">
-          <span class="signal-key">Policy preview</span>
-          <span class="signal-value" id="policyPreviewLine">Waiting</span>
+        <div class="line">
+          <span class="line-key">Last decision</span>
+          <span class="line-value" id="decisionLine">Waiting</span>
+        </div>
+        <div class="line">
+          <span class="line-key">Audit ID</span>
+          <span class="line-value" id="auditLine">Waiting</span>
         </div>
       </article>
 
-      <article class="panel">
-        <div class="eyebrow">Live system signals</div>
-        <h2>Operational visibility</h2>
-        <div class="signal-line">
-          <span class="signal-key">Runtime health</span>
-          <span class="signal-value" id="healthLine">Loading</span>
-        </div>
-        <div class="signal-line">
-          <span class="signal-key">x402 status</span>
-          <span class="signal-value" id="x402Line">Loading</span>
-        </div>
-        <div class="signal-line">
-          <span class="signal-key">MPP Charge</span>
-          <span class="signal-value" id="mppLine">Loading</span>
-        </div>
-        <div class="signal-line">
-          <span class="signal-key">Range provider</span>
-          <span class="signal-value" id="rangeLine">Loading</span>
-        </div>
-        <div class="signal-line">
-          <span class="signal-key">Max spend</span>
-          <span class="signal-value" id="maxSpendLine">Loading</span>
-        </div>
-        <div class="signal-line">
-          <span class="signal-key">Rate limit</span>
-          <span class="signal-value" id="rateLimitLine">Loading</span>
-        </div>
-        <div class="signal-line">
-          <span class="signal-key">Range thresholds</span>
-          <span class="signal-value" id="rangeThresholdLine">Loading</span>
-        </div>
-      </article>
+      <div class="stack">
+        <section class="panel">
+          <div class="eyebrow">Runtime</div>
+          <h2>Control signals</h2>
+          <div class="line">
+            <span class="line-key">Health</span>
+            <span class="line-value" id="healthLine">Loading</span>
+          </div>
+          <div class="line">
+            <span class="line-key">Max spend</span>
+            <span class="line-value" id="maxSpendLine">Loading</span>
+          </div>
+          <div class="line">
+            <span class="line-key">Rate limit</span>
+            <span class="line-value" id="rateLimitLine">Loading</span>
+          </div>
+          <div class="line">
+            <span class="line-key">Range bundle</span>
+            <span class="line-value" id="rangeLine">Loading</span>
+          </div>
+          <div class="line">
+            <span class="line-key">Facilitator</span>
+            <span class="line-value" id="facilitatorLine">Loading</span>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="review-head">
+            <div>
+              <div class="eyebrow">Review queue</div>
+              <h2>Held requests</h2>
+            </div>
+            <button id="refreshReviews" class="ghost">Refresh</button>
+          </div>
+          <div id="reviewsList" class="review-list">
+            <div class="empty">Loading reviews...</div>
+          </div>
+        </section>
+      </div>
     </section>
 
     <section class="panel">
-      <div class="eyebrow">API response log</div>
-      <h2>Live response</h2>
-      <pre id="output">Loading live Safe4 signals…</pre>
+      <div class="eyebrow">Response log</div>
+      <h2>Latest API exchange</h2>
+      <pre id="output">Loading live Safe4 signals...</pre>
     </section>
   </main>
 
@@ -640,6 +673,82 @@
       }
     }
 
+    function applyResponseSummary(response) {
+      const body = response.data || {};
+      const decision = body.policy?.decision || body.status || "waiting";
+      setText("decisionLine", decision);
+      setText("auditLine", body.audit?.audit_id || body.receipt?.receipt_id || "Waiting");
+      if (body.request_id) {
+        requestId = body.request_id;
+        setText("requestIdLine", requestId);
+      }
+      if (body.payment_requirement?.settle_endpoint) {
+        setText("settleEndpointLine", body.payment_requirement.settle_endpoint);
+      }
+    }
+
+    function reviewStatusClass(status) {
+      if (status === "approved") return "status-ok";
+      if (status === "rejected" || status === "deny") return "status-deny";
+      return "status-review";
+    }
+
+    async function loadReviews() {
+      const response = await fetchJson("/reviews");
+      const reviews = response.data?.reviews || [];
+      setText("metricReviews", String(reviews.length));
+      const list = document.getElementById("reviewsList");
+      list.innerHTML = "";
+
+      if (!reviews.length) {
+        list.innerHTML = '<div class="empty">No held requests yet.</div>';
+        return;
+      }
+
+      for (const review of reviews.slice(0, 6)) {
+        const card = document.createElement("article");
+        card.className = "review-card";
+        const statusClass = reviewStatusClass(review.status);
+        const reasons = Array.isArray(review.reasons) ? review.reasons.join(", ") : "No reasons recorded";
+        const paymentReference = review.payment_reference || review.payment?.payment_reference || "pending";
+        card.innerHTML = `
+          <div class="review-title">
+            <span>${review.tool_name} / ${review.request_id.slice(0, 8)}</span>
+            <span class="review-status ${statusClass}">${review.status}</span>
+          </div>
+          <div class="review-note">${reasons}</div>
+          <div class="review-note">payment: <code>${paymentReference}</code></div>
+        `;
+
+        if (review.status === "pending") {
+          const actions = document.createElement("div");
+          actions.className = "review-actions";
+          const approve = document.createElement("button");
+          approve.textContent = "Approve";
+          approve.className = "primary";
+          approve.addEventListener("click", () => decideReview(review.request_id, "approve"));
+          const reject = document.createElement("button");
+          reject.textContent = "Reject";
+          reject.addEventListener("click", () => decideReview(review.request_id, "reject"));
+          actions.appendChild(approve);
+          actions.appendChild(reject);
+          card.appendChild(actions);
+        }
+
+        list.appendChild(card);
+      }
+    }
+
+    async function decideReview(requestIdValue, action) {
+      const response = await fetchJson(`/reviews/${requestIdValue}/${action}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ note: `demo-${action}` })
+      });
+      show(response);
+      await loadReviews();
+    }
+
     async function loadSignals() {
       const [health, protocols, policies] = await Promise.all([
         fetchJson("/health"),
@@ -650,25 +759,24 @@
       healthData = health.data;
       updateModeUI();
 
-      setText("healthPill", health.data.status || "unknown");
-      setText("assetPill", health.data.asset_code || "unknown");
       setText("metricNetwork", health.data.network || "unknown");
+      setText("metricAsset", health.data.asset_code || "unknown");
       setText("healthLine", `${health.data.status} / ${health.data.verification_mode}`);
-      setText("facilitatorPill", health.data.x402_facilitator_configured ? "configured" : "not configured");
-      setText("rangeState", health.data.range_risk_configured ? "Configured" : "Optional");
-      setText("rangeLine", health.data.range_risk_configured ? "Configured" : "Not configured");
-
       setText("x402State", protocols.data?.x402?.status || "unknown");
-      setText("x402Line", `${protocols.data?.x402?.status || "unknown"} / ${protocols.data?.x402?.network || "n/a"}`);
       setText("mppState", protocols.data?.mpp_charge?.status || "unknown");
-      setText("mppLine", `${protocols.data?.mpp_charge?.status || "unknown"} / ${protocols.data?.primary_demo_target || "n/a"}`);
+      setText("rangeState", health.data.range_risk_configured ? "Configured" : "Optional");
 
       const localPolicy = policies.data?.local_policy || {};
       const rangePolicy = policies.data?.external_risk?.range_risk || {};
       setText("maxSpendLine", localPolicy.max_spend_per_request || "unknown");
       setText("rateLimitLine", `${localPolicy.rate_limit_requests || "?"} per ${localPolicy.rate_limit_window_seconds || "?"}s`);
-      setText("rateLimitPill", `${localPolicy.rate_limit_requests || "?"}/${localPolicy.rate_limit_window_seconds || "?"}s`);
-      setText("rangeThresholdLine", `${rangePolicy.address_review_score || "?"}/${rangePolicy.address_deny_score || "?"} address`);
+      setText(
+        "rangeLine",
+        rangePolicy.configured
+          ? `payment + address + sanctions (${rangePolicy.address_review_score}/${rangePolicy.address_deny_score})`
+          : "Not configured"
+      );
+      setText("facilitatorLine", health.data.x402_facilitator_configured ? "configured" : "not configured");
 
       show({
         health: health.data,
@@ -683,10 +791,9 @@
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(currentPayload())
       });
-      requestId = response.data.request_id || null;
+      requestId = response.data?.request_id || null;
       paymentToken = null;
-      setText("requestIdLine", requestId || "unavailable");
-      setText("settleEndpointLine", response.data?.payment_requirement?.settle_endpoint || "unavailable");
+      applyResponseSummary(response);
       show(response);
     }
 
@@ -695,6 +802,7 @@
         show({ error: "Request a challenge first." });
         return;
       }
+
       const mode = healthData?.verification_mode;
       const payer = document.getElementById("payer").value.trim() || "GDEMO_PAYER_ACCOUNT";
 
@@ -704,7 +812,8 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ request_id: requestId, payer })
         });
-        paymentToken = response.data.payment_token || null;
+        paymentToken = response.data?.payment_token || null;
+        applyResponseSummary(response);
         show(response);
         return;
       }
@@ -726,12 +835,15 @@
             payment_reference: paymentReference || null
           })
         });
-        paymentToken = response.data.payment_token || null;
+        paymentToken = response.data?.payment_token || null;
+        applyResponseSummary(response);
         show(response);
         return;
       }
 
-      const guidePath = mode === "mpp_charge_preview" ? "/payments/mpp/charge/guide" : "/payments/x402/guide";
+      const guidePath = mode === "mpp_charge_preview"
+        ? `/payments/mpp/charge/guide?request_id=${encodeURIComponent(requestId)}`
+        : "/payments/x402/guide";
       const response = await fetchJson(guidePath);
       show(response);
     }
@@ -750,7 +862,9 @@
         },
         body: JSON.stringify(currentPayload())
       });
+      applyResponseSummary(response);
       show(response);
+      await loadReviews();
     }
 
     async function previewPolicy() {
@@ -768,8 +882,7 @@
         params.set("recipient_network", "stellar");
       }
       const response = await fetchJson(`/policies/evaluate?${params.toString()}`);
-      const decision = response.data?.final_policy?.decision || "unknown";
-      setText("policyPreviewLine", decision);
+      setText("decisionLine", response.data?.final_policy?.decision || "unknown");
       show(response);
     }
 
@@ -777,8 +890,11 @@
     document.getElementById("settle").addEventListener("click", createProof);
     document.getElementById("retry").addEventListener("click", retryAuthorized);
     document.getElementById("previewPolicy").addEventListener("click", previewPolicy);
+    document.getElementById("previewPolicyHero").addEventListener("click", previewPolicy);
+    document.getElementById("refreshReviews").addEventListener("click", loadReviews);
+    document.getElementById("refreshReviewsHero").addEventListener("click", loadReviews);
 
-    loadSignals().catch((error) => {
+    Promise.all([loadSignals(), loadReviews()]).catch((error) => {
       show({ error: String(error) });
     });
   </script>
